@@ -9,9 +9,11 @@ type Props = {
   keyboardType?: KeyboardTypeOptions;
   error?: string;
   multiline?: boolean;
+  secureTextEntry?: boolean;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 };
 
-export function Input({ label, value, onChangeText, placeholder, keyboardType, error, multiline }: Props) {
+export function Input({ label, value, onChangeText, placeholder, keyboardType, error, multiline, secureTextEntry, autoCapitalize = 'sentences' }: Props) {
   return <>
     {label ? <Text style={styles.label}>{label}</Text> : null}
     <TextInput
@@ -22,7 +24,8 @@ export function Input({ label, value, onChangeText, placeholder, keyboardType, e
       onChangeText={onChangeText}
       keyboardType={keyboardType}
       multiline={multiline}
-      autoCapitalize="sentences"
+      secureTextEntry={secureTextEntry}
+      autoCapitalize={autoCapitalize}
       accessibilityLabel={label || placeholder}
     />
     {error ? <Text style={styles.error}>{error}</Text> : null}
