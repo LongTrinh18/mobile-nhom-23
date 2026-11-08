@@ -1,6 +1,8 @@
 /** Danh mục, chi nhánh, sản phẩm, tồn kho, bảng size, gợi ý.  Endpoint: /rest/v1/v_product_catalog, product_variants, … */
 import { db } from './client';
-import type { Branch, Category, CatalogItem, Variant, Media, StockRow, SizeChartRow } from './types';
+import type {
+  Branch, BranchFulfillment, Category, CatalogItem, Variant, Media, OrderLineInput, StockRow, SizeChartRow,
+} from './types';
 import { unwrap } from './errors';
 
 export async function getCategories(): Promise<Category[]> {
@@ -86,6 +88,24 @@ export async function getStockForVariants(variantIds: string[]): Promise<StockRo
   return unwrap(
     await db().from('v_inventory_available').select('*').in('variant_id', variantIds),
   );
+}
+
+/**
+ * Chi nhánh nào đủ hàng cho cả đơn (B5) — dùng ở checkout trước khi đặt.
+ * Trả mọi chi nhánh đang hoạt động: đủ hàng trước → gần nhất → mã chi nhánh.
+ * Chỉ để hiển thị; place_order kiểm tra lại tồn kho lúc đặt.
+ */
+export async function findFulfillingBranches(
+  items: OrderLineInput[],
+  coords?: { lat: number; lng: number },
+): Promise<BranchFulfillment[]> {
+  return unwrap(
+    await db().rpc('find_fulfilling_branches', {
+      p_items: items.map(i => ({ variant_id: i.variantId, quantity: i.quantity })),
+      p_lat: coords?.lat ?? null,
+      p_lng: coords?.lng ?? null,
+    }),
+  ) as BranchFulfillment[];
 }
 
 /** Luật gợi ý "Thường mua cùng" cho 1 sản phẩm (có dữ liệu sau khi chạy Apriori) */

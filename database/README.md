@@ -8,6 +8,12 @@
 | 2 | `migrations/02_functions.sql` | View `v_product_catalog`, `v_inventory_available`; hàm `add_to_cart`, `place_order`, `update_order_status`, `restock`; job pg_cron hết hạn nhận hàng |
 | 3 | `migrations/03_seed.sql` | 3 chi nhánh, 5 danh mục, 5 sản phẩm, 15 SKU, 45 dòng tồn kho, bảng size, ảnh, chính sách |
 | 4 | `migrations/04_rls.sql` | Bật RLS 14 bảng, phân quyền khách / manager / admin, quyền upload Storage |
+| 5 | `migrations/05_delivery_schema.sql` | Tuần 2 (B2): giao hàng, phí ship, voucher, thanh toán, chống gọi lặp, tọa độ chi nhánh; nhóm khách hàng, size trẻ em, bộ sưu tập, đánh giá, nguồn ảnh (chỉ cấu trúc) |
+| 6 | `migrations/06_order_functions.sql` | Tuần 2 (B5, B6): `find_fulfilling_branches`, `place_order` mới (pickup + delivery), trạng thái giao hàng, job tự hủy đơn pending quá 24 giờ |
+
+File 05 và 06 chạy trong một transaction: lỗi ở đâu thì không có gì thay đổi, sửa xong chạy lại cả file. Chỉ chạy mỗi file một lần.
+
+**Đổi chữ ký `place_order` ở file 06:** bản cũ (`p_branch_id, p_items, …`) bị xóa. App gọi qua `placeOrder()` trong `frontend/src/api/orderApi.ts` (đã cập nhật).
 
 Nếu file 02 báo lỗi `pg_cron`: Database → Extensions → bật **pg_cron**, chạy lại đoạn cuối file 02.
 
@@ -35,7 +41,16 @@ where id = (select id from auth.users where email = 'admin@test.com');
 select count(*) from public.product_variants;                          -- 15
 select count(*) from public.inventory;                                 -- 45
 select * from public.v_inventory_available where available_quantity = 0;  -- 3 dòng
-select tablename, rowsecurity from pg_tables where schemaname = 'public'; -- 14 dòng true
+select tablename, rowsecurity from pg_tables where schemaname = 'public'; -- 18 dòng true (sau file 05)
+
+-- Sau file 05, 06
+select code, latitude, longitude from public.branches;                 -- 3 dòng có tọa độ
+select * from public.vouchers;                                          -- UNIQLO10, FREESHIP
+select jobname, schedule from cron.job;                                 -- 2 job
+select branch_code, can_fulfill, missing_items
+from public.find_fulfilling_branches(
+  (select jsonb_agg(jsonb_build_object('variant_id', id, 'quantity', 1))
+   from public.product_variants where sku = 'SM001-BLUE-L'));          -- CN01 false
 ```
 
 ## Quy ước
@@ -43,7 +58,8 @@ select tablename, rowsecurity from pg_tables where schemaname = 'public'; -- 14 
 - Giá: số nguyên VND. Size áo XS–XXL, quần 28–36.
 - Ảnh: `products/{mã SP}/{mã màu}/{số}.webp` trong bucket `product-images`.
 - App KHÔNG ghi thẳng `orders`, `order_items`, `inventory` — chỉ qua hàm `rpc`.
-- Sửa database về sau: thêm file `05_...sql`, không sửa file đã chạy.
+- Sửa database về sau: thêm file mới (`07_...sql`), không sửa file đã chạy.
+- Quy định nghiệp vụ tuần 2 (QD01–QD37), trạng thái đơn, tồn kho, mã lỗi: Google Sheet "Thiet_ke_du_lieu_App_quan_ao", các tab có hậu tố "(mới)".
 
 ## Tài liệu liên quan
 

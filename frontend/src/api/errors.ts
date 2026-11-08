@@ -5,12 +5,15 @@ export type ApiErrorCode =
   | 'NOT_CONFIGURED' | 'NOT_AUTHENTICATED' | 'INVALID_CUSTOMER' | 'INVALID_BRANCH' | 'EMPTY_ORDER'
   | 'INVALID_QUANTITY' | 'VARIANT_NOT_FOUND' | 'VARIANT_NOT_AVAILABLE'
   | 'OUT_OF_STOCK' | 'ORDER_NOT_FOUND' | 'INVALID_TRANSITION' | 'FORBIDDEN'
-  | 'USER_NOT_FOUND' | 'UNKNOWN';
+  | 'USER_NOT_FOUND'
+  | 'TOO_MANY_ITEMS' | 'NO_BRANCH_AVAILABLE' | 'INVALID_FULFILLMENT' | 'MISSING_ADDRESS'
+  | 'OUT_OF_DELIVERY_AREA' | 'INVALID_VOUCHER' | 'INVALID_REQUEST'
+  | 'UNKNOWN';
 
 export class ApiError extends Error {
   /** Mã lỗi để rẽ nhánh trong code */
   code: ApiErrorCode;
-  /** Phần sau dấu ":" — với OUT_OF_STOCK là danh sách SKU, ví dụ "AT001-BLACK-M, QJ001-BLUE-30" */
+  /** Phần sau dấu ":" — với OUT_OF_STOCK là danh sách SKU, ví dụ "AT001-BLACK-M (cần 2, còn 1)" */
   detail: string;
   constructor(code: ApiErrorCode, detail: string, raw?: unknown) {
     super(`${code}: ${detail}`);
@@ -25,6 +28,8 @@ const KNOWN_CODES: ApiErrorCode[] = [
   'NOT_AUTHENTICATED', 'INVALID_CUSTOMER', 'INVALID_BRANCH', 'EMPTY_ORDER',
   'INVALID_QUANTITY', 'VARIANT_NOT_FOUND', 'VARIANT_NOT_AVAILABLE', 'OUT_OF_STOCK',
   'ORDER_NOT_FOUND', 'INVALID_TRANSITION', 'FORBIDDEN', 'USER_NOT_FOUND',
+  'TOO_MANY_ITEMS', 'NO_BRANCH_AVAILABLE', 'INVALID_FULFILLMENT', 'MISSING_ADDRESS',
+  'OUT_OF_DELIVERY_AREA', 'INVALID_VOUCHER', 'INVALID_REQUEST',
 ];
 
 /** Hàm SQL báo lỗi dạng "MÃ_LỖI: chi tiết" → tách thành ApiError */
@@ -52,9 +57,15 @@ export function friendlyMessage(e: unknown): string {
     case 'VARIANT_NOT_AVAILABLE':
     case 'VARIANT_NOT_FOUND':     return 'Sản phẩm này hiện không còn bán.';
     case 'INVALID_BRANCH':        return 'Chi nhánh không còn hoạt động, vui lòng chọn chi nhánh khác.';
-    case 'INVALID_CUSTOMER':      return 'Vui lòng nhập tên và số điện thoại người nhận.';
+    case 'INVALID_CUSTOMER':      return 'Vui lòng nhập tên và số điện thoại hợp lệ (ví dụ: 0912345678).';
     case 'EMPTY_ORDER':           return 'Giỏ hàng đang trống.';
-    case 'INVALID_QUANTITY':      return 'Số lượng không hợp lệ.';
+    case 'INVALID_QUANTITY':      return 'Số lượng mỗi sản phẩm phải từ 1 đến 10.';
+    case 'TOO_MANY_ITEMS':        return 'Mỗi đơn tối đa 20 sản phẩm khác nhau.';
+    case 'NO_BRANCH_AVAILABLE':   return `Không có chi nhánh nào đủ hàng cho cả đơn. ${e.detail}. Hãy bỏ bớt hoặc giảm số lượng.`;
+    case 'INVALID_FULFILLMENT':   return 'Vui lòng chọn cách nhận hàng.';
+    case 'MISSING_ADDRESS':       return 'Vui lòng nhập địa chỉ giao hàng.';
+    case 'OUT_OF_DELIVERY_AREA':  return 'Địa chỉ nằm ngoài khu vực giao hàng (chỉ giao trong TP.HCM).';
+    case 'INVALID_VOUCHER':       return 'Mã giảm giá không hợp lệ hoặc không áp dụng cho đơn này.';
     case 'INVALID_TRANSITION':    return 'Không thể thực hiện thao tác này với đơn ở trạng thái hiện tại.';
     case 'ORDER_NOT_FOUND':       return 'Không tìm thấy đơn hàng.';
     case 'FORBIDDEN':             return 'Bạn không có quyền thực hiện thao tác này.';

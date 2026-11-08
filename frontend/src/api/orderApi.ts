@@ -4,8 +4,11 @@ import type { OrderStatus, Branch, Order, OrderDetail, PlaceOrderInput, PlaceOrd
 import { unwrap } from './errors';
 
 /**
- * Mua ngay một SKU, giữ nguyên các sản phẩm trong giỏ hàng.
- * Hết hàng: ném ApiError code 'OUT_OF_STOCK', detail = danh sách SKU thiếu.
+ * Đặt đơn nhận tại cửa hàng (pickup) hoặc giao hàng (delivery). Server tự tính giá,
+ * giảm giá, phí ship; delivery thì server chọn chi nhánh gần nhất đủ hàng.
+ * Giỏ nằm trên máy: đặt thành công thì màn hình tự xóa các dòng đã đặt.
+ * Lỗi thường gặp: 'OUT_OF_STOCK' (pickup), 'NO_BRANCH_AVAILABLE' (delivery), 'INVALID_VOUCHER'.
+ * Gọi lại với cùng idempotencyKey → nhận lại đơn cũ (is_duplicate = true), không tạo đơn mới.
  */
 export async function placeBuyNowOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
   const rows = unwrap(await db().rpc('place_buy_now_order', {
@@ -19,10 +22,16 @@ export async function placeBuyNowOrder(input: PlaceOrderInput): Promise<PlaceOrd
 export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
   const rows = unwrap(
     await db().rpc('place_order', {
-      p_branch_id: input.branchId,
       p_items: input.items.map(i => ({ variant_id: i.variantId, quantity: i.quantity })),
+      p_fulfillment_type: input.fulfillmentType,
       p_customer_name: input.customerName,
       p_customer_phone: input.customerPhone,
+      p_idempotency_key: input.idempotencyKey,
+      p_branch_id: input.branchId ?? null,
+      p_delivery_address: input.deliveryAddress ?? null,
+      p_delivery_lat: input.deliveryLat ?? null,
+      p_delivery_lng: input.deliveryLng ?? null,
+      p_voucher_code: input.voucherCode ?? null,
       p_note: input.note ?? null,
     }),
   ) as PlaceOrderResult[];
@@ -55,7 +64,8 @@ export async function getOrderDetail(orderId: string): Promise<OrderDetail> {
 /**
  * Đổi trạng thái đơn.
  *  Khách:   'cancelled' (khi đơn pending / confirmed)
- *  Manager: 'confirmed' → 'ready_for_pickup' → 'completed', hoặc 'cancelled'
+ *  Manager, pickup:   'confirmed' → 'ready_for_pickup' → 'completed', hoặc 'cancelled'
+ *  Manager, delivery: 'confirmed' → 'shipping' → 'delivered' | 'delivery_failed', hoặc 'cancelled'
  */
 export async function updateOrderStatus(
   orderId: string, newStatus: Exclude<OrderStatus, 'pending' | 'expired'>, reason?: string,

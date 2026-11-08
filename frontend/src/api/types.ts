@@ -1,9 +1,14 @@
-/** Kiểu dữ liệu — khớp bảng/view trong database (01_schema.sql, 02_functions.sql). */
+/** Kiểu dữ liệu — khớp bảng/view trong database (01_schema.sql … 06_order_functions.sql). */
 
 export type Role = 'customer' | 'manager' | 'admin';
 export type OrderStatus =
-  | 'pending' | 'confirmed' | 'ready_for_pickup'
-  | 'completed' | 'cancelled' | 'expired';
+  | 'pending' | 'confirmed'
+  | 'ready_for_pickup' | 'completed' | 'expired'     // nhận tại cửa hàng
+  | 'shipping' | 'delivered' | 'delivery_failed'     // giao hàng
+  | 'cancelled';
+export type FulfillmentType = 'pickup' | 'delivery';
+export type PaymentStatus = 'unpaid' | 'paid';
+export type CustomerGroup = 'women' | 'men' | 'unisex' | 'kids' | 'baby';
 
 export interface Profile {
   id: string;
@@ -27,6 +32,8 @@ export interface Branch {
   close_time: string;
   image_path: string | null;
   is_active: boolean;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface Category {
@@ -34,9 +41,8 @@ export interface Category {
   slug: string;
   name: string;
   code_prefix: string;
-  gender: 'men' | 'women' | 'unisex';
-  customer_group?: 'men' | 'women' | 'kids' | 'baby' | 'unisex';
-  size_type: 'letter' | 'waist';
+  gender: 'men' | 'women' | 'unisex' | 'kids' | 'baby';
+  size_type: 'letter' | 'waist' | 'height';   // height: size theo chiều cao (cm), đồ trẻ em
   image_path: string | null;
   sort_order: number;
 }
@@ -52,7 +58,7 @@ export interface CatalogItem {
   category_id: string;
   category_slug: string;
   category_name: string;
-  gender: 'men' | 'women' | 'unisex';
+  gender: Category['gender'];
   base_price: number;          // giá gốc VND
   sale_price: number | null;   // null = không giảm
   final_price: number;         // giá khách trả
@@ -61,6 +67,10 @@ export interface CatalogItem {
   thumbnail_path: string | null;
   total_available: number;     // tổng còn bán ở mọi chi nhánh
   created_at: string;
+  customer_group: CustomerGroup;
+  rating_avg: number | null;   // null = chưa có đánh giá
+  rating_count: number;
+  discount_percent: number;    // 0 khi không giảm giá
 }
 
 export interface Variant {
@@ -81,6 +91,8 @@ export interface Media {
   bucket: 'product-images' | 'product-video';
   path: string;
   sort_order: number;
+  source_url: string | null;
+  license: string | null;
 }
 
 /** Một dòng của view v_inventory_available */
@@ -131,15 +143,26 @@ export interface Order {
   order_code: string;
   user_id: string;
   branch_id: string;
+  fulfillment_type: FulfillmentType;
   status: OrderStatus;
-  total_amount: number;
+  subtotal_amount: number;     // tiền hàng
+  discount_amount: number;
+  shipping_fee: number;
+  total_amount: number;        // = subtotal − discount + shipping_fee
+  voucher_code: string | null;
+  payment_method: 'cod';
+  payment_status: PaymentStatus;
   customer_name: string;
   customer_phone: string;
+  delivery_address: string | null;
+  delivery_lat: number | null;
+  delivery_lng: number | null;
   note: string | null;
   pickup_deadline: string | null;
+  shipped_at: string | null;
   created_at: string;
   updated_at: string;
-  completed_at: string | null;
+  completed_at: string | null; // lúc khách nhận (pickup) hoặc giao xong (delivery)
 }
 
 export interface OrderItem {
@@ -158,16 +181,84 @@ export interface OrderDetail extends Order {
   } })[];
 }
 
+export interface OrderLineInput {
+  variantId: string;
+  quantity: number;             // 1–10; tối đa 20 dòng mỗi đơn
+}
+
 export interface PlaceOrderInput {
-  branchId: string;
-  items: { variantId: string; quantity: number }[];
+  items: OrderLineInput[];      // các dòng giỏ được chọn
+  fulfillmentType: FulfillmentType;
   customerName: string;
   customerPhone: string;
+  /** UUID tạo một lần khi mở màn checkout, gửi lại nguyên giá trị mỗi lần bấm Đặt */
+  idempotencyKey: string;
+  branchId?: string;            // bắt buộc với pickup; delivery do server chọn
+  deliveryAddress?: string;     // bắt buộc với delivery
+  deliveryLat?: number;
+  deliveryLng?: number;
+  voucherCode?: string;
   note?: string;
 }
 
 export interface PlaceOrderResult {
   order_id: string;
-  order_code: string;   // DH20261027-0001
+  order_code: string;           // DH20261027-0001
+  status: OrderStatus;
+  fulfillment_type: FulfillmentType;
+  branch_id: string;
+  branch_name: string;
+  branch_address: string;
+  subtotal_amount: number;
+  discount_amount: number;
+  shipping_fee: number;
   total_amount: number;
+  voucher_code: string | null;
+  payment_method: 'cod';
+  created_at: string;
+  /** true khi server trả lại đơn đã tạo trước đó với cùng idempotencyKey */
+  is_duplicate: boolean;
+}
+
+/** Một dòng kết quả của find_fulfilling_branches (B5) */
+export interface BranchFulfillment {
+  branch_id: string;
+  branch_code: string;
+  branch_name: string;
+  address: string;
+  phone: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  distance_km: number | null;   // null khi thiếu tọa độ
+  can_fulfill: boolean;         // đủ TẤT CẢ món
+  missing_items: { variant_id: string; sku: string; requested: number; available: number }[];
+}
+
+export interface Voucher {
+  code: string;
+  description: string;
+  discount_type: 'percent' | 'free_shipping';
+  discount_value: number;
+  applies_to: 'all' | 'delivery';
+  is_active: boolean;
+}
+
+export interface Collection {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  cover_image_path: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface ProductReview {
+  id: string;
+  product_id: string;
+  user_id: string | null;
+  reviewer_name: string;
+  rating: number;               // 1–5
+  content: string | null;
+  created_at: string;
 }
