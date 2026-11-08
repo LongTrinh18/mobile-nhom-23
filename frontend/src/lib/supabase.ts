@@ -1,21 +1,21 @@
 import 'react-native-url-polyfill/auto';
-import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import './pkce-crypto';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import { createClient, processLock, type SupabaseClient } from '@supabase/supabase-js';
 
-// EXPO_PUBLIC_ variables are intentionally visible to the mobile app.
-// ONLY use a Supabase publishable / anon key here. NEVER use secret/service_role.
+// Only publishable / anon keys belong in a mobile app.
 const url = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const publishableKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
 export const hasSupabaseConfig = Boolean(url && publishableKey);
-
-// No Auth in week 1: keep the catalog client stateless.
-// Person C can add persistent Auth storage later, without altering catalog screens.
 export const supabase: SupabaseClient | null = url && publishableKey
   ? createClient(url, publishableKey, {
       auth: {
-        autoRefreshToken: false,
-        persistSession: false,
+        ...(Platform.OS !== 'web' ? { storage: AsyncStorage, lock: processLock } : {}),
+        autoRefreshToken: true,
+        persistSession: true,
         detectSessionInUrl: false,
+        flowType: 'pkce',
       },
     })
   : null;

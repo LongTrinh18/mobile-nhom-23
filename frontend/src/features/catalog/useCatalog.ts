@@ -8,12 +8,14 @@ export function useCatalog() {
   const [error, setError] = useState<string | null>(null);
   const [retryNumber, setRetryNumber] = useState(0);
 
-  const retry = useCallback(() => setRetryNumber(n => n + 1), []);
+  const retry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    setRetryNumber(n => n + 1);
+  }, []);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(null);
     getCatalog().then(catalog => {
       if (active) setData(catalog);
     }).catch((e: unknown) => {

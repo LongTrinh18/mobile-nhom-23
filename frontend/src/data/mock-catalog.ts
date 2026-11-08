@@ -1,11 +1,11 @@
 import type { Catalog, Product, ProductVariant, StockRow } from '../types/shop';
 
 const baseProducts: Omit<Product, 'variants'>[] = [
-  { id: 'p01', name: 'Áo thun cotton', category: 'Áo', description: 'Áo thun cotton mềm, phom dáng cơ bản, dễ phối đồ hằng ngày.', priceVnd: 199000 },
-  { id: 'p02', name: 'Áo sơ mi Oxford', category: 'Áo', description: 'Sơ mi chất liệu Oxford, phong cách tối giản, phù hợp công sở.', priceVnd: 499000 },
-  { id: 'p03', name: 'Quần jeans slim', category: 'Quần', description: 'Quần denim co giãn nhẹ, ống slim, thoải mái khi di chuyển.', priceVnd: 599000 },
-  { id: 'p04', name: 'Áo khoác nhẹ', category: 'Áo khoác', description: 'Áo khoác nhẹ tiện dụng, thích hợp thời tiết chuyển mùa.', priceVnd: 699000 },
-  { id: 'p05', name: 'Quần short kaki', category: 'Quần', description: 'Quần short kaki thoáng mát, thích hợp cho hoạt động thường ngày.', priceVnd: 349000 },
+  { id: 'p01', createdAt: '2026-11-06T00:00:00Z', basePriceVnd: 249000, categorySlug: 'ao-thun', audience: 'unisex', name: 'Áo thun cotton', category: 'Áo', description: 'Áo thun cotton mềm, phom dáng cơ bản, dễ phối đồ hằng ngày.', priceVnd: 199000 },
+  { id: 'p02', createdAt: '2026-11-05T00:00:00Z', basePriceVnd: 499000, categorySlug: 'so-mi', audience: 'men', name: 'Áo sơ mi Oxford', category: 'Áo', description: 'Sơ mi chất liệu Oxford, phong cách tối giản, phù hợp công sở.', priceVnd: 499000 },
+  { id: 'p03', createdAt: '2026-11-04T00:00:00Z', basePriceVnd: 599000, categorySlug: 'quan-jean', audience: 'men', name: 'Quần jeans slim', category: 'Quần', description: 'Quần denim co giãn nhẹ, ống slim, thoải mái khi di chuyển.', priceVnd: 599000 },
+  { id: 'p04', createdAt: '2026-11-07T00:00:00Z', basePriceVnd: 799000, categorySlug: 'ao-khoac', audience: 'unisex', name: 'Áo khoác nhẹ', category: 'Áo khoác', description: 'Áo khoác nhẹ tiện dụng, thích hợp thời tiết chuyển mùa.', priceVnd: 699000 },
+  { id: 'p05', createdAt: '2026-11-03T00:00:00Z', basePriceVnd: 349000, categorySlug: 'quan-kaki', audience: 'men', name: 'Quần short kaki', category: 'Quần', description: 'Quần short kaki thoáng mát, thích hợp cho hoạt động thường ngày.', priceVnd: 349000 },
 ];
 
 const matrix = [

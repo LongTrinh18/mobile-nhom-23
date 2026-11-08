@@ -35,6 +35,7 @@ export interface Category {
   name: string;
   code_prefix: string;
   gender: 'men' | 'women' | 'unisex';
+  customer_group?: 'men' | 'women' | 'kids' | 'baby' | 'unisex';
   size_type: 'letter' | 'waist';
   image_path: string | null;
   sort_order: number;
@@ -120,9 +121,9 @@ export interface CartItem {
 
 /** Giỏ hàng kèm thông tin SKU + sản phẩm để hiển thị */
 export interface CartLine extends CartItem {
-  variant: Variant & {
-    product: Pick<CatalogItem, 'id' | 'code' | 'name' | 'base_price' | 'sale_price'>;
-  };
+  variant: (Variant & {
+    product: Pick<CatalogItem, 'id' | 'code' | 'name' | 'base_price' | 'sale_price'> | null;
+  }) | null;
 }
 
 export interface Order {

@@ -1,0 +1,11 @@
+feat: tích hợp giao diện mua sắm, Supabase và Google Auth Android
+
+- Trang chủ Nam/Nữ/Trẻ em/Em bé, danh mục ảnh và bốn khối dữ liệu.
+- Dùng chung ProductCard/ProductSection và thanh điều hướng chính.
+- Giỏ hàng/đặt hàng Supabase, chi tiết sản phẩm, chia sẻ và back theo luồng.
+- Google OAuth PKCE, lưu/refresh phiên, hồ sơ hợp lệ và đăng xuất.
+- Thêm migrations 05–08, kiểm thử và hướng dẫn bàn giao B/C.
+
+B: triển khai migrations còn thiếu và cấu hình Google trong Supabase.
+C: kiểm tra giỏ hàng/checkout và nghiệm thu Auth trên Android development build.
+Google chưa được bật trong project; chưa nghiệm thu đăng nhập Google thật.

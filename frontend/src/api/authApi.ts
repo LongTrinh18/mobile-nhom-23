@@ -1,4 +1,5 @@
 /** Đăng ký, đăng nhập, hồ sơ người dùng.  Endpoint: /auth/v1/*, /rest/v1/profiles */
+import { loadMyProfile, signOutCurrentDevice } from '../services/auth-service';
 import { db } from './client';
 import type { Profile } from './types';
 import { ApiError, unwrap } from './errors';
@@ -18,14 +19,14 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
-  await db().auth.signOut();
+  await signOutCurrentDevice();
 }
 
 /** Hồ sơ của người đang đăng nhập (null nếu chưa đăng nhập) */
 export async function getMyProfile(): Promise<Profile | null> {
-  const { data: { user } } = await db().auth.getUser();
-  if (!user) return null;
-  return unwrap(await db().from('profiles').select('*').eq('id', user.id).single());
+  const { data: { session }, error } = await db().auth.getSession();
+  if (error) throw error;
+  return session ? loadMyProfile() : null;
 }
 
 /** Chỉ sửa được các trường cá nhân; role / branch_id bị database chặn */
