@@ -1,10 +1,14 @@
 import { mockCatalog } from '../data/mock-catalog';
+import { getCategoryAudience } from '../data/customer-groups';
 import { supabase } from '../lib/supabase';
 import type { Branch, Catalog, Product, ProductVariant, StockRow } from '../types/shop';
 
 type CategoryDb = {
   id: string;
   name: string;
+  slug?: string;
+  gender?: string;
+  customer_group?: string;
 };
 type ProductDb = {
   id: string;
@@ -13,6 +17,7 @@ type ProductDb = {
   category_id: string;
   base_price: number;
   sale_price: number | null;
+  created_at: string;
 };
 type VariantDb = {
   id: string;
@@ -54,7 +59,7 @@ export async function getCatalog(): Promise<Catalog> {
 
   const [p, v, b, i, c, m] = await Promise.all([
     client.from('products')
-      .select('id,name,description,category_id,base_price,sale_price')
+      .select('id,name,description,category_id,base_price,sale_price,created_at')
       .eq('is_active', true).order('name'),
     client.from('product_variants')
       .select('id,product_id,sku,size,color_name,color_code')
@@ -64,7 +69,7 @@ export async function getCatalog(): Promise<Catalog> {
     client.from('inventory')
       .select('variant_id,branch_id,quantity,reserved_quantity'),
     client.from('categories')
-      .select('id,name'),
+      .select('*'),
     client.from('product_media')
       .select('product_id,color_code,media_type,bucket,path,sort_order')
       .eq('media_type', 'image').order('sort_order'),
@@ -90,7 +95,7 @@ export async function getCatalog(): Promise<Catalog> {
   const rawCategories = (c.data ?? []) as CategoryDb[];
   const rawMedia = (m.data ?? []) as MediaDb[];
 
-  const categoryNames = new Map(rawCategories.map(item => [item.id, item.name]));
+  const categoriesById = new Map(rawCategories.map(item => [item.id, item]));
   const variantsByProduct: Record<string, ProductVariant[]> = {};
   for (const variant of rawVariants) {
     const item: ProductVariant = {
@@ -124,8 +129,12 @@ export async function getCatalog(): Promise<Catalog> {
       id: product.id,
       name: product.name,
       description: product.description ?? '',
-      category: categoryNames.get(product.category_id) ?? 'Khác',
+      category: categoriesById.get(product.category_id)?.name ?? 'Khác',
+      categorySlug: categoriesById.get(product.category_id)?.slug,
+      audience: getCategoryAudience(categoriesById.get(product.category_id) ?? {}),
       priceVnd: product.sale_price ?? product.base_price,
+      basePriceVnd: product.base_price,
+      createdAt: product.created_at,
       imageUrl,
       variants: variantsByProduct[product.id] ?? [],
     };

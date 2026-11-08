@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/shop/Button';
 import { Input } from '../../components/shop/Input';
 import { hasSupabaseConfig, supabase } from '../../lib/supabase';
 import { theme } from '../../theme/theme';
+import { authErrorMessage, userAuthError } from '../../services/auth-service';
+import { firstParam, safeReturnTarget, targetUrl } from '../../navigation/routes';
 
 export default function RegisterScreen() {
+  const params = useLocalSearchParams();
+  const returnTo = targetUrl(safeReturnTarget(firstParam(params.returnTo)));
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,24 +29,25 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      if (hasSupabaseConfig && supabase) {
+      if (!supabase) throw userAuthError('Chưa cấu hình kết nối Supabase Auth.');
+      {
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: { data: { full_name: fullName.trim() } },
         });
         if (error) {
-          Alert.alert('Đăng ký thất bại', error.message);
+          Alert.alert('Đăng ký thất bại', authErrorMessage(error));
           setLoading(false);
           return;
         }
       }
-      // Demo / Success register flow
-      Alert.alert('Đăng ký thành công', 'Tài khoản của bạn đã được khởi tạo thành công!', [
-        { text: 'Chuyển sang Đăng nhập', onPress: () => router.replace('/auth/login') },
+      // Email confirmation may be required by Supabase.
+      Alert.alert('Đăng ký thành công', 'Vui lòng kiểm tra email xác nhận (nếu có), sau đó đăng nhập.', [
+        { text: 'Chuyển sang Đăng nhập', onPress: () => router.dismissTo({ pathname: '/auth/login', params: { returnTo } }) },
       ]);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Có lỗi xảy ra khi đăng ký.';
+      const message = authErrorMessage(err);
       Alert.alert('Lỗi đăng ký', message);
     } finally {
       setLoading(false);
@@ -95,15 +100,15 @@ export default function RegisterScreen() {
         error={submitted ? confirmError : undefined}
       />
 
-      <Button title="Đăng ký tài khoản" onPress={handleRegister} loading={loading} style={{ marginTop: 8 }} />
+      <Button title="Đăng ký tài khoản" onPress={handleRegister} loading={loading} disabled={!hasSupabaseConfig} style={{ marginTop: 8 }} />
 
       {!hasSupabaseConfig && (
-        <Text style={styles.demoNotice}>DEMO · Chưa kết nối Supabase Auth. Điền thông tin hợp lệ để trải nghiệm tạo tài khoản demo.</Text>
+        <Text style={styles.demoNotice}>Chưa cấu hình kết nối Supabase Auth.</Text>
       )}
 
       <View style={styles.footerRow}>
         <Text style={styles.footerText}>Đã có tài khoản?</Text>
-        <Pressable onPress={() => router.push('/auth/login')}>
+        <Pressable onPress={() => router.dismissTo({ pathname: '/auth/login', params: { returnTo } })}>
           <Text style={styles.linkText}> Đăng nhập ngay</Text>
         </Pressable>
       </View>

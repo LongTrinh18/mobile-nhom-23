@@ -4,9 +4,18 @@ import type { OrderStatus, Branch, Order, OrderDetail, PlaceOrderInput, PlaceOrd
 import { unwrap } from './errors';
 
 /**
- * Đặt đơn nhận tại chi nhánh. Thành công: các món đã đặt tự xóa khỏi giỏ.
+ * Mua ngay một SKU, giữ nguyên các sản phẩm trong giỏ hàng.
  * Hết hàng: ném ApiError code 'OUT_OF_STOCK', detail = danh sách SKU thiếu.
  */
+export async function placeBuyNowOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
+  const rows = unwrap(await db().rpc('place_buy_now_order', {
+    p_branch_id: input.branchId, p_items: input.items.map(item => ({ variant_id: item.variantId, quantity: item.quantity })),
+    p_customer_name: input.customerName, p_customer_phone: input.customerPhone, p_note: input.note ?? null,
+  })) as PlaceOrderResult[];
+  return rows[0];
+}
+
+/** Đặt từ giỏ hàng: các món đã đặt được xóa khỏi giỏ trong cùng giao dịch. */
 export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
   const rows = unwrap(
     await db().rpc('place_order', {

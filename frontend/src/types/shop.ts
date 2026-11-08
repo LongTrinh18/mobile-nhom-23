@@ -13,12 +13,18 @@ export type ProductVariant = {
   color: string;
 };
 
+export type CustomerAudience = 'men' | 'women' | 'kids' | 'baby';
+
 export type Product = {
   id: string;
   name: string;
   description: string;
   category: string;
+  categorySlug?: string;
+  audience?: CustomerAudience | 'unisex';
   priceVnd: number; // Prices in integer VND, not decimals
+  basePriceVnd?: number;
+  createdAt?: string;
   imageUrl?: string;
   variants: ProductVariant[];
 };
@@ -38,7 +44,7 @@ export type Catalog = {
 
 /** Contract for C's cart screen and A's add-to-cart action. */
 export type CartItem = {
-  key: string; // `${skuId}:${branchId}`, prevents merging two branches
+  key: string; // Supabase cart row ID; demo uses skuId:branchId
   productId: string;
   productName: string;
   skuId: string;
