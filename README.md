@@ -1,5 +1,7 @@
 ﻿# Mobile Nhóm 23 — UNIQLO
 
+Hướng dẫn mới cho B/C: [Google Auth, chạy Android và đưa các thay đổi lên GitHub](docs/HUONG_DAN_B_C_AUTH_GITHUB.md). Google OAuth cần development build, làm theo tài liệu này thay cho Expo Go.
+
 Ứng dụng bán quần áo nhiều chi nhánh, khách đặt online và **nhận hàng tại cửa hàng**. Có chatbot tư vấn size/giá/sản phẩm và gợi ý sản phẩm (Apriori).
 
 | Phần | Công nghệ |

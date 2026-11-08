@@ -1,15 +1,25 @@
-import { useState } from 'react';
-import { router } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../components/shop/Button';
 import { Input } from '../../components/shop/Input';
 import { hasSupabaseConfig, supabase } from '../../lib/supabase';
 import { theme } from '../../theme/theme';
+import { useAuth } from '../../context/AuthContext';
+import { authErrorMessage, loadMyProfile, LoginCancelled, signInWithGoogle, userAuthError } from '../../services/auth-service';
+import { firstParam, safeReturnTarget, targetUrl } from '../../navigation/routes';
 
 export default function LoginScreen() {
+  const params = useLocalSearchParams();
+  const destination = safeReturnTarget(firstParam(params.returnTo));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { initializing, refreshProfile } = useAuth();
+  const [loading, setLoading] = useState<'password' | 'google' | null>(null);
+  const [notice, setNotice] = useState('');
+  const busy = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const [submitted, setSubmitted] = useState(false);
 
   const emailError = !email.trim() ? 'Vui lòng nhập Email' : !/\S+@\S+\.\S+/.test(email) ? 'Email chưa hợp lệ' : '';
@@ -17,28 +27,32 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     setSubmitted(true);
-    if (emailError || passwordError) return;
-
-    setLoading(true);
+    if (emailError || passwordError || busy.current) return;
+    busy.current = true; setLoading('password'); setNotice('');
     try {
-      if (hasSupabaseConfig && supabase) {
-        const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
-        if (error) {
-          Alert.alert('Đăng nhập thất bại', error.message);
-          setLoading(false);
-          return;
-        }
+      if (!supabase) throw userAuthError('Chưa cấu hình kết nối Supabase Auth.');
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) throw error;
+      await loadMyProfile();
+      await refreshProfile();
+      if (mounted.current) router.dismissTo(destination);
+    } catch (error) {
+      if (mounted.current) Alert.alert('Đăng nhập thất bại', authErrorMessage(error));
+    } finally { busy.current = false; if (mounted.current) setLoading(null); }
+  }
+  async function handleGoogleLogin() {
+    if (busy.current) return;
+    busy.current = true; setLoading('google'); setNotice('');
+    try {
+      const target = await signInWithGoogle(destination);
+      await refreshProfile();
+      if (mounted.current) router.dismissTo(target);
+    } catch (error) {
+      if (mounted.current) {
+        if (error instanceof LoginCancelled) setNotice('Bạn đã huỷ đăng nhập Google.');
+        else Alert.alert('Đăng nhập Google thất bại', authErrorMessage(error));
       }
-      // Demo / Success login flow
-      Alert.alert('Đăng nhập thành công', `Chào mừng ${email.trim()}!`, [
-        { text: 'OK', onPress: () => router.replace('/account') },
-      ]);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Có lỗi xảy ra khi đăng nhập.';
-      Alert.alert('Lỗi đăng nhập', message);
-    } finally {
-      setLoading(false);
-    }
+    } finally { busy.current = false; if (mounted.current) setLoading(null); }
   }
 
   return (
@@ -69,20 +83,24 @@ export default function LoginScreen() {
         error={submitted ? passwordError : undefined}
       />
 
-      <Button title="Đăng nhập" onPress={handleLogin} loading={loading} style={{ marginTop: 8 }} />
+      <Button title="Đăng nhập" onPress={handleLogin} loading={loading === 'password'} disabled={Boolean(loading) || initializing || !hasSupabaseConfig} style={{ marginTop: 8 }} />
+      <Text style={styles.separator}>hoặc</Text>
+      <Button title="Tiếp tục với Google" variant="outline" onPress={handleGoogleLogin}
+        loading={loading === 'google'} disabled={Boolean(loading) || initializing || !hasSupabaseConfig} />
+      {notice ? <Text accessibilityLiveRegion="polite" style={styles.status}>{notice}</Text> : null}
 
       {!hasSupabaseConfig && (
-        <Text style={styles.demoNotice}>DEMO · Chưa kết nối Supabase Auth. Bạn có thể thử đăng nhập bằng bất kỳ email/mật khẩu nào hợp lệ.</Text>
+        <Text style={styles.demoNotice}>Chưa cấu hình Supabase Auth. Vui lòng kiểm tra kết nối của ứng dụng.</Text>
       )}
 
       <View style={styles.footerRow}>
         <Text style={styles.footerText}>Chưa có tài khoản?</Text>
-        <Pressable onPress={() => router.push('/auth/register')}>
+        <Pressable disabled={Boolean(loading)} onPress={() => router.push({ pathname: '/auth/register', params: { returnTo: targetUrl(destination) } })}>
           <Text style={styles.linkText}> Đăng ký ngay</Text>
         </Pressable>
       </View>
 
-      <Pressable onPress={() => router.replace('/')} style={styles.skipButton}>
+      <Pressable disabled={Boolean(loading)} onPress={() => router.replace('/')} style={styles.skipButton}>
         <Text style={styles.skipText}>Bỏ qua & Về trang chủ →</Text>
       </Pressable>
     </ScrollView>
@@ -90,6 +108,8 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  separator: { textAlign: 'center', color: theme.colors.muted, marginVertical: 16 },
+  status: { color: theme.colors.muted, lineHeight: 20, marginTop: 12 },
   screen: { flex: 1, backgroundColor: theme.colors.background },
   content: { padding: 22, paddingBottom: 50 },
   header: { marginTop: 24, marginBottom: 28 },

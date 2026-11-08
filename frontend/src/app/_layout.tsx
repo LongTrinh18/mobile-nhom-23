@@ -1,26 +1,20 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { TopToolbar } from '../components/navigation/TopToolbar';
+import { AuthProvider } from '../context/AuthContext';
 import { CartProvider } from '../context/CartContext';
 import { theme } from '../theme/theme';
 
+export const unstable_settings = { anchor: '(tabs)' };
 export default function RootLayout() {
-  return (
-    <CartProvider>
-      <StatusBar style="dark" />
-      <Stack screenOptions={{
-        headerStyle: { backgroundColor: theme.colors.surface },
-        headerTintColor: theme.colors.ink,
-        headerTitleStyle: { fontWeight: '700' },
-        headerShadowVisible: false,
-        contentStyle: { backgroundColor: theme.colors.background },
-      }}>
-        <Stack.Screen name="index" options={{ title: 'Mobile Nhóm 23' }} />
-        <Stack.Screen name="products/index" options={{ title: 'Sản phẩm' }} />
-        <Stack.Screen name="products/[id]" options={{ title: 'Chi tiết sản phẩm' }} />
-        <Stack.Screen name="cart" options={{ title: 'Giỏ hàng' }} />
-        <Stack.Screen name="checkout" options={{ title: 'Đặt hàng COD' }} />
-        <Stack.Screen name="account" options={{ title: 'Tài khoản' }} />
-      </Stack>
-    </CartProvider>
-  );
+  return <SafeAreaProvider><AuthProvider><CartProvider>
+    <StatusBar style="dark" />
+    <Stack screenOptions={{ header: () => <TopToolbar />, gestureEnabled: false, contentStyle: { backgroundColor: theme.colors.background } }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="products/index" /><Stack.Screen name="products/[id]" />
+      <Stack.Screen name="cart" /><Stack.Screen name="checkout" /><Stack.Screen name="checkout/success" />
+      <Stack.Screen name="auth/callback" options={{ headerShown: false }} /><Stack.Screen name="chatbot" /><Stack.Screen name="auth/login" /><Stack.Screen name="auth/register" />
+    </Stack>
+  </CartProvider></AuthProvider></SafeAreaProvider>;
 }

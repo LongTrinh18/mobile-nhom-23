@@ -133,9 +133,9 @@ export interface CartItem {
 
 /** Giỏ hàng kèm thông tin SKU + sản phẩm để hiển thị */
 export interface CartLine extends CartItem {
-  variant: Variant & {
-    product: Pick<CatalogItem, 'id' | 'code' | 'name' | 'base_price' | 'sale_price'>;
-  };
+  variant: (Variant & {
+    product: Pick<CatalogItem, 'id' | 'code' | 'name' | 'base_price' | 'sale_price'> | null;
+  }) | null;
 }
 
 export interface Order {

@@ -10,6 +10,15 @@ import { unwrap } from './errors';
  * Lỗi thường gặp: 'OUT_OF_STOCK' (pickup), 'NO_BRANCH_AVAILABLE' (delivery), 'INVALID_VOUCHER'.
  * Gọi lại với cùng idempotencyKey → nhận lại đơn cũ (is_duplicate = true), không tạo đơn mới.
  */
+export async function placeBuyNowOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
+  const rows = unwrap(await db().rpc('place_buy_now_order', {
+    p_branch_id: input.branchId, p_items: input.items.map(item => ({ variant_id: item.variantId, quantity: item.quantity })),
+    p_customer_name: input.customerName, p_customer_phone: input.customerPhone, p_note: input.note ?? null,
+  })) as PlaceOrderResult[];
+  return rows[0];
+}
+
+/** Đặt từ giỏ hàng: các món đã đặt được xóa khỏi giỏ trong cùng giao dịch. */
 export async function placeOrder(input: PlaceOrderInput): Promise<PlaceOrderResult> {
   const rows = unwrap(
     await db().rpc('place_order', {
