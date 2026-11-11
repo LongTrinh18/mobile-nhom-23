@@ -1,17 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View, Image } from 'react-native';
 import { CategoryPicture } from '../../components/shop/CategoryPicture';
 import { HomeProductSections } from '../../components/shop/HomeProductSections';
 import { useCatalog } from '../../features/catalog/useCatalog';
 import { useHomeMerchandising } from '../../features/catalog/useHomeMerchandising';
+import { useRecentView } from '../../context/RecentViewContext';
 import { customerGroups } from '../../data/customer-groups';
 import { theme } from '../../theme/theme';
+import { formatVnd } from '../../types/shop';
 
 export default function HomeScreen() {
   const catalog = useCatalog();
   const merchandising = useHomeMerchandising();
+  const { recentItems, clearRecentItems } = useRecentView();
   const window = useWindowDimensions();
   const [pageWidth, setPageWidth] = useState(window.width);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -37,6 +40,38 @@ export default function HomeScreen() {
       {customerGroups.map((group, index) => <ScrollView key={group.key} style={{ width: pageWidth }}
         contentContainerStyle={styles.pageContent} nestedScrollEnabled showsVerticalScrollIndicator={false}
         accessibilityElementsHidden={activeIndex !== index} importantForAccessibility={activeIndex === index ? 'auto' : 'no-hide-descendants'}>
+
+        {/* RECENTLY VIEWED SECTION - Shown only on the first active tab to avoid repetition */}
+        {index === 0 && recentItems.length > 0 && (
+          <View style={styles.recentSection}>
+            <View style={styles.recentHeaderRow}>
+              <Text style={styles.recentTitle}>👀 Sản phẩm vừa xem</Text>
+              <Pressable onPress={clearRecentItems} hitSlop={10}>
+                <Text style={styles.clearRecentBtn}>Xóa lịch sử</Text>
+              </Pressable>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recentScroll}>
+              {recentItems.map(item => (
+                <Pressable
+                  key={item.id}
+                  style={styles.recentCard}
+                  onPress={() => router.push({ pathname: '/products/[id]', params: { id: item.id } })}
+                >
+                  <View style={styles.recentImgBox}>
+                    {item.imageUrl ? (
+                      <Image source={{ uri: item.imageUrl }} style={styles.recentImg} resizeMode="cover" />
+                    ) : (
+                      <View style={styles.recentPlaceholder}><Text style={{ fontSize: 24 }}>👕</Text></View>
+                    )}
+                  </View>
+                  <Text style={styles.recentName} numberOfLines={2}>{item.name}</Text>
+                  <Text style={styles.recentPrice}>{formatVnd(item.priceVnd)}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
         <Text style={styles.eyebrow}>{group.label.toLocaleUpperCase('vi')}</Text>
         <HomeProductSections audience={group.key} catalog={catalog} merchandising={merchandising} />
         <Text accessibilityRole="header" style={styles.title}>Danh mục</Text>
@@ -67,6 +102,19 @@ const styles = StyleSheet.create({
   groupLabel: { fontSize: 15, fontWeight: '500', color: theme.colors.muted },
   activeLabel: { color: theme.colors.ink, fontWeight: '800' },
   pageContent: { padding: 20, paddingBottom: 32 },
+
+  recentSection: { marginBottom: 24, borderBottomWidth: 1, borderBottomColor: theme.colors.border, paddingBottom: 16 },
+  recentHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 },
+  recentTitle: { fontSize: 16, fontWeight: '800', color: theme.colors.ink },
+  clearRecentBtn: { fontSize: 12, color: theme.colors.muted, fontWeight: '600', padding: 4 },
+  recentScroll: { paddingBottom: 4 },
+  recentCard: { width: 110, marginRight: 12 },
+  recentImgBox: { width: 110, height: 140, borderRadius: 8, overflow: 'hidden', backgroundColor: '#F3F4F6', marginBottom: 6 },
+  recentImg: { width: '100%', height: '100%' },
+  recentPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  recentName: { fontSize: 12, fontWeight: '600', color: theme.colors.ink, lineHeight: 16 },
+  recentPrice: { fontSize: 13, fontWeight: '800', color: theme.colors.primary, marginTop: 4 },
+
   eyebrow: { fontSize: 11, fontWeight: '700', letterSpacing: 1.8, color: theme.colors.muted, marginTop: 4, marginBottom: 6 },
   title: { fontSize: 27, fontWeight: '800', color: theme.colors.ink, marginBottom: 20 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 20 },

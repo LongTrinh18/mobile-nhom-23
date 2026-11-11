@@ -22,7 +22,7 @@ export default function OrderSuccessScreen() {
         <Text>Thanh toán tại cửa hàng khi nhận hàng.</Text>
       </>}
       <Button title="Tiếp tục mua sắm →" onPress={() => router.dismissTo('/')} />
-      <Button title="Xem đơn hàng" variant="outline" onPress={() => router.dismissTo('/orders')} />
+      <Button title="Xem đơn hàng" variant="outline" onPress={() => router.dismissTo('/orders' as any)} />
     </View>
   </ScrollView>;
 }
