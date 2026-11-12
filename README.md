@@ -68,8 +68,10 @@ Lưu ý khi điền:
 ## Dựng database (chỉ B làm 1 lần)
 
 1. Supabase → **Database → Extensions** → bật `pg_cron`.
-2. Supabase → **SQL Editor** → tab **New** → dán toàn bộ từng file rồi bấm **Run** (Ctrl + Enter), đúng thứ tự:
-   `01_schema.sql` → `02_functions.sql` → `03_seed.sql` → `04_rls.sql`
+2. Supabase → **SQL Editor** → tab **New** → dán toàn bộ từng file rồi bấm **Run** (Ctrl + Enter), đúng thứ tự tên file:
+   `01_schema` → `02_functions` → `03_seed` → `04_rls` → `05_customer_groups` → `05_delivery_schema` → `06_home_sections` → `06_order_functions` → `07_buy_now` → `08_auth_profiles` → `09_fix_checkout_flow`
+   (app hiện tại cần đủ tới file 09; chi tiết từng file ở `database/README.md`).
+   Kiểm tra toàn bộ migration trên máy, không cần Supabase: `cd frontend && npm run test:checkout`.
 3. Tạo tài khoản test và gán vai trò: xem `database/README.md`.
 
 Có thể chạy từ VS Code bằng extension **PostgreSQL** (Microsoft) hoặc `psql`, dùng chuỗi kết nối ở nút **Connect → Connection String → Session pooler**. Chuỗi này chứa mật khẩu database — không lưu vào file nào trong repo.

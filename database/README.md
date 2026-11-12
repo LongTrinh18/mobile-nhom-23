@@ -11,9 +11,25 @@
 | 5 | `migrations/05_delivery_schema.sql` | Tuần 2 (B2): giao hàng, phí ship, voucher, thanh toán, chống gọi lặp, tọa độ chi nhánh; nhóm khách hàng, size trẻ em, bộ sưu tập, đánh giá, nguồn ảnh (chỉ cấu trúc) |
 | 6 | `migrations/06_order_functions.sql` | Tuần 2 (B5, B6): `find_fulfilling_branches`, `place_order` mới (pickup + delivery), trạng thái giao hàng, job tự hủy đơn pending quá 24 giờ |
 
-File 05 và 06 chạy trong một transaction: lỗi ở đâu thì không có gì thay đổi, sửa xong chạy lại cả file. Chỉ chạy mỗi file một lần.
+**Thứ tự đầy đủ = thứ tự tên file** (có hai file 05 và hai file 06):
 
-**Đổi chữ ký `place_order` ở file 06:** bản cũ (`p_branch_id, p_items, …`) bị xóa. App gọi qua `placeOrder()` trong `frontend/src/api/orderApi.ts` (đã cập nhật).
+`01_schema` → `02_functions` → `03_seed` → `04_rls` → `05_customer_groups` → `05_delivery_schema` → `06_home_sections` → `06_order_functions` → `07_buy_now` → `08_auth_profiles` → `09_fix_checkout_flow`
+
+| File | Nội dung |
+|---|---|
+| `05_customer_groups.sql` | Nhóm khách (Nam / Nữ / Trẻ em / Em bé) cho danh mục |
+| `06_home_sections.sql` | Bán chạy (`get_home_best_sellers`), bộ sưu tập trang chủ |
+| `07_buy_now.sql` | (Cũ, bị file 09 thay thế) hàm mua ngay `place_buy_now_order` |
+| `08_auth_profiles.sql` | Hồ sơ cho tài khoản Google, `ensure_my_profile` |
+| `09_fix_checkout_flow.sql` | Sửa lỗi rà soát: xóa `place_buy_now_order` (luôn lỗi), thêm `place_cart_order` (đặt từ giỏ + xóa món đã đặt khỏi giỏ), chống tràn số khi giảm giá, bán chạy tính cả đơn `delivered`, người ngoài nhận `ORDER_NOT_FOUND`, chặn `restock` khi thiếu hồ sơ, không lộ bộ sưu tập đang ẩn |
+
+**Đã chạy tới 08 trên Supabase rồi?** Chỉ cần chạy thêm `09_fix_checkout_flow.sql`. App mới gọi `place_cart_order`, nên phải chạy file 09 trước khi dùng bản app này.
+
+Kiểm thử toàn bộ migration trên máy (không cần Supabase): `cd frontend && npm run test:checkout`.
+
+Các file 05 → 09 chạy trong một transaction: lỗi ở đâu thì không có gì thay đổi, sửa xong chạy lại cả file. File 09 chạy lại nhiều lần vẫn an toàn.
+
+**Đổi chữ ký `place_order` ở file 06:** bản cũ (`p_branch_id, p_items, …`) bị xóa. App gọi qua `frontend/src/api/orderApi.ts`: `placeCartOrder()` (đặt từ giỏ) và `placeOrder()` (mua ngay, không đụng giỏ). `p_idempotency_key` là **uuid**: app tạo một mã cho mỗi lần đặt và gửi lại đúng mã đó khi bấm lại.
 
 Nếu file 02 báo lỗi `pg_cron`: Database → Extensions → bật **pg_cron**, chạy lại đoạn cuối file 02.
 
