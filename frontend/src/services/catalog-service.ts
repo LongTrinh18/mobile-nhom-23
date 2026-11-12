@@ -162,3 +162,33 @@ export function getStock(catalog: Catalog, skuId: string, branchId: string): num
     catalog.stock.find(item => item.skuId === skuId && item.branchId === branchId)?.quantity ?? 0,
   );
 }
+
+export type AlternativeBranchSuggestion = {
+  branchId: string;
+  branchName: string;
+  branchAddress?: string;
+  availableQuantity: number;
+  canFulfillAll: boolean;
+};
+
+export function findAlternativeBranches(
+  catalog: Catalog,
+  skuId: string,
+  requestedQuantity: number,
+  currentBranchId: string,
+): AlternativeBranchSuggestion[] {
+  return catalog.branches
+    .filter(branch => branch.id !== currentBranchId)
+    .map(branch => {
+      const availableQuantity = getStock(catalog, skuId, branch.id);
+      return {
+        branchId: branch.id,
+        branchName: branch.name,
+        branchAddress: branch.address,
+        availableQuantity,
+        canFulfillAll: availableQuantity >= requestedQuantity,
+      };
+    })
+    .filter(b => b.availableQuantity > 0)
+    .sort((a, b) => b.availableQuantity - a.availableQuantity);
+}

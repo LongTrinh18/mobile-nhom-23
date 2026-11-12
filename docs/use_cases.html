@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thiết kế Use Case - UNIQLO Mobile App (Nhóm 23)</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --primary: #EC1C24;
+      --primary-dark: #C81018;
+      --ink: #111827;
+      --muted: #6B7280;
+      --bg: #F9FAFB;
+      --card-bg: #FFFFFF;
+      --border: #E5E7EB;
+      --success: #059669;
+      --warning: #D97706;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); color: var(--ink); line-height: 1.6; padding-bottom: 60px; }
+
+    header { background-color: var(--primary); color: #fff; padding: 30px 20px; text-align: center; box-shadow: 0 4px 12px rgba(236,28,36,0.15); }
+    header h1 { font-size: 28px; font-weight: 900; letter-spacing: 0.5px; }
+    header p { font-size: 14px; margin-top: 6px; opacity: 0.9; }
+
+    .container { max-width: 1100px; margin: 30px auto; padding: 0 20px; }
+
+    .card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card-title { font-size: 20px; font-weight: 800; color: var(--ink); margin-bottom: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 8px; display: inline-block; }
+
+    /* Navigation Tabs */
+    .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+    .tab-btn { background: #F3F4F6; border: 1px solid var(--border); color: var(--ink); padding: 10px 16px; border-radius: 20px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn:hover { background: #E5E7EB; }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+    th, td { border: 1px solid var(--border); padding: 12px 14px; text-align: left; vertical-align: top; }
+    th { background-color: #F3F4F6; font-weight: 700; color: var(--ink); width: 28%; }
+    td { background-color: #fff; }
+
+    /* Steps & Flow */
+    .flow-title { font-weight: 700; color: var(--primary); margin-top: 16px; margin-bottom: 8px; font-size: 15px; }
+    ol, ul { padding-left: 20px; margin-bottom: 12px; }
+    li { margin-bottom: 6px; font-size: 14px; }
+
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+    .badge-primary { background: #FEE2E2; color: var(--primary); }
+    .badge-success { background: #D1FAE5; color: var(--success); }
+
+    .mermaid { display: flex; justify-content: center; background: #fff; padding: 20px; border-radius: 8px; border: 1px solid var(--border); }
+
+    footer { text-align: center; margin-top: 40px; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>UNIQLO MOBILE APP - THIẾT KẾ USE CASE CHUẨN</h1>
+    <p>Đồ án Phát triển Ứng dụng Di động Đa chi nhánh · Nhóm 23</p>
+  </header>
+
+  <div class="container">
+
+    <!-- Section 1: Sơ đồ Tổng thể -->
+    <div class="card">
+      <h2 class="card-title">1. Sơ đồ Use Case Tổng thể (UML Diagram)</h2>
+      <div class="mermaid">
+        graph TD
+            subgraph "SYSTEM BOUNDARY: UNIQLO Mobile System"
+                UC01["UC-01: Xem Trang chủ & Sản phẩm nổi bật"]
+                UC02["UC-02: Tìm kiếm & Lọc sản phẩm"]
+                UC03["UC-03: Xem chi tiết & Tồn kho chi nhánh"]
+                UC04["UC-04: Thêm sản phẩm vào giỏ hàng"]
+                UC05["UC-05: Quản lý giỏ hàng & Voucher"]
+                UC06["UC-06: Đặt hàng thanh toán COD"]
+                UC07["UC-07: Đăng ký tài khoản"]
+                UC08["UC-08: Đăng nhập tài khoản"]
+                UC09["UC-09: Xem Hồ sơ cá nhân & Đăng xuất"]
+            end
+
+            ActorGuest["👤 Khách vãng lai (Guest)"]
+            ActorUser["🔐 Khách đã đăng nhập (User)"]
+            SystemSupa["☁️ Supabase Backend / Auth"]
+
+            ActorGuest --> UC01
+            ActorGuest --> UC02
+            ActorGuest --> UC03
+            ActorGuest --> UC04
+            ActorGuest --> UC05
+            ActorGuest --> UC06
+            ActorGuest --> UC07
+            ActorGuest --> UC08
+
+            ActorUser --> UC09
+            ActorUser -.->|Kế thừa| ActorGuest
+
+            UC03 <-->|Truy vấn DB| SystemSupa
+            UC06 <-->|Lưu Đơn hàng| SystemSupa
+            UC07 <-->|Auth Signup| SystemSupa
+            UC08 <-->|Auth Signin| SystemSupa
+
+            UC06 .->|&lt;&lt;include&gt;&gt;| UC05
+            UC04 .->|&lt;&lt;include&gt;&gt;| UC03
+      </div>
+    </div>
+
+    <!-- Section 2: Chi tiết Use Case -->
+    <div class="card">
+      <h2 class="card-title">2. Bảng Mô tả Chi tiết Các Use Case (Specifications)</h2>
+
+      <!-- Tab Buttons -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('uc03')">UC-03: Chi tiết & Tồn kho</button>
+        <button class="tab-btn" onclick="showTab('uc05')">UC-05: Giỏ hàng & Voucher</button>
+        <button class="tab-btn" onclick="showTab('uc06')">UC-06: Đặt hàng COD</button>
+        <button class="tab-btn" onclick="showTab('uc08')">UC-08: Đăng nhập</button>
+        <button class="tab-btn" onclick="showTab('uc01')">UC-01: Trang chủ</button>
+      </div>
+
+      <!-- Content Tab UC-03 -->
+      <div id="uc03" class="tab-content">
+        <table>
+          <tr><th>Mã Use Case</th><td><span class="badge badge-primary">UC-03</span></td></tr>
+          <tr><th>Tên Use Case</th><td><strong>Xem chi tiết sản phẩm & Kiểm tra tồn kho chi nhánh</strong></td></tr>
+          <tr><th>Tác nhân chính</th><td>Khách vãng lai / Khách đã đăng nhập</td></tr>
+          <tr><th>Mô tả</th><td>Người dùng xem thông tin chi tiết một sản phẩm, lựa chọn Size, Màu sắc và Chi nhánh để kiểm tra tồn kho khả dụng thời gian thực.</td></tr>
+          <tr><th>Điều kiện tiên quyết</th><td>Người dùng bấm chọn 1 sản phẩm từ Danh mục hoặc Trang chủ.</td></tr>
+          <tr><th>Điều kiện sau</th><td>Số lượng tồn kho khả dụng tương ứng với SKU + Chi nhánh được hiển thị chính xác.</td></tr>
+        </table>
+        <div class="flow-title">Luồng sự kiện chính (Main Flow):</div>
+        <ol>
+          <li>Người dùng nhấn chọn sản phẩm bất kỳ.</li>
+          <li>Hệ thống điều hướng sang màn hình Chi tiết sản phẩm (`/products/[id]`).</li>
+          <li>Hệ thống tải dữ liệu hình ảnh, mô tả, bảng giá, biến thể Size/Màu và danh sách Chi nhánh.</li>
+          <li>Người dùng chọn Size (M, L, XL...) và Màu sắc.</li>
+          <li>Người dùng chọn Chi nhánh nhận hàng (ví dụ: UNIQLO Vincom Bà Triệu).</li>
+          <li>Hệ thống tính toán tồn kho khả dụng: `Available Stock = Quantity - Reserved Quantity`.</li>
+          <li>Hệ thống hiển thị thông tin số lượng tồn kho và khả năng thêm vào giỏ.</li>
+        </ol>
+        <div class="flow-title">Luồng ngoại lệ (Alternative Flow):</div>
+        <ul>
+          <li><strong>Nếu tồn kho = 0:</strong> Hệ thống thông báo chữ đỏ "Tồn kho: 0", hiển thị nhãn "Đã hết hàng" và tự động vô hiệu hóa nút "Thêm vào giỏ hàng".</li>
+        </ul>
+      </div>
+
+      <!-- Content Tab UC-05 -->
+      <div id="uc05" class="tab-content" style="display:none;">
+        <table>
+          <tr><th>Mã Use Case</th><td><span class="badge badge-primary">UC-05</span></td></tr>
+          <tr><th>Tên Use Case</th><td><strong>Quản lý giỏ hàng & Áp dụng Voucher</strong></td></tr>
+          <tr><th>Tác nhân chính</th><td>Khách vãng lai / Khách đã đăng nhập</td></tr>
+          <tr><th>Mô tả</th><td>Kiểm tra danh sách món hàng trong giỏ, tăng/giảm số lượng, áp dụng voucher giảm giá và tính tổng thanh toán.</td></tr>
+          <tr><th>Điều kiện tiên quyết</th><td>Người dùng mở màn hình Giỏ hàng (`/cart`).</td></tr>
+          <tr><th>Điều kiện sau</th><td>Giỏ hàng cập nhật số lượng và tổng tiền chính xác.</td></tr>
+        </table>
+        <div class="flow-title">Luồng sự kiện chính (Main Flow):</div>
+        <ol>
+          <li>Người dùng mở màn hình Giỏ hàng (`/cart`).</li>
+          <li>Hệ thống hiển thị danh sách các món hàng (gồm Ảnh, Tên, Size, Màu, Chi nhánh chọn mua, SKU, Đơn giá và Tổng tiền).</li>
+          <li>Người dùng có thể bấm nút `+` hoặc `−` để tăng giảm số lượng.</li>
+          <li>Người dùng nhập mã voucher (ví dụ: `UNIQLO10` hoặc `FREESHIP`) và bấm "Áp dụng".</li>
+          <li>Hệ thống tính tiền giảm giá và cập nhật Tổng thanh toán.</li>
+          <li>Người dùng bấm "Tiến hành đặt hàng →" để chuyển sang Checkout.</li>
+        </ol>
+        <div class="flow-title">Luồng ngoại lệ (Alternative Flow):</div>
+        <ul>
+          <li><strong>Nếu giảm số lượng về 0:</strong> Mở Hộp thoại xác nhận hỏi có muốn xóa món hàng khỏi giỏ không.</li>
+          <li><strong>Nếu tăng quá tồn kho chi nhánh:</strong> Nút `+` bị mờ và hiển thị cảnh báo chạm trần tồn kho.</li>
+        </ul>
+      </div>
+
+      <!-- Content Tab UC-06 -->
+      <div id="uc06" class="tab-content" style="display:none;">
+        <table>
+          <tr><th>Mã Use Case</th><td><span class="badge badge-primary">UC-06</span></td></tr>
+          <tr><th>Tên Use Case</th><td><strong>Đặt hàng thanh toán khi nhận hàng (COD)</strong></td></tr>
+          <tr><th>Tác nhân chính</th><td>Khách vãng lai / Khách đã đăng nhập</td></tr>
+          <tr><th>Mô tả</th><td>Điền thông tin giao nhận, chọn hình thức COD và hoàn tất xác nhận đơn hàng.</td></tr>
+          <tr><th>Điều kiện tiên quyết</th><td>Giỏ hàng có ít nhất 1 sản phẩm.</td></tr>
+          <tr><th>Điều kiện sau</th><td>Sinh Mã đơn hàng, xóa giỏ hàng và hiển thị màn hình Đặt hàng Thành công.</td></tr>
+        </table>
+        <div class="flow-title">Luồng sự kiện chính (Main Flow):</div>
+        <ol>
+          <li>Người dùng bấm "Tiến hành đặt hàng" từ Giỏ hàng.</li>
+          <li>Hệ thống chuyển sang màn hình Checkout (`/checkout`).</li>
+          <li>Người dùng điền Họ tên, Số điện thoại, Địa chỉ chi tiết và Ghi chú giao hàng.</li>
+          <li>Người dùng chọn phương thức thanh toán **COD (Thanh toán khi nhận hàng)**.</li>
+          <li>Người dùng rà soát tóm tắt món hàng và Tổng tiền COD.</li>
+          <li>Người dùng bấm "Xác nhận đặt hàng (COD)".</li>
+          <li>Hệ thống validate thông tin, khởi tạo Mã đơn hàng (ví dụ `#UQ-849201`), xóa sạch giỏ hàng.</li>
+          <li>Hệ thống chuyển sang Màn hình Hoàn tất đơn hàng (`/checkout/success`).</li>
+        </ol>
+      </div>
+
+      <!-- Content Tab UC-08 -->
+      <div id="uc08" class="tab-content" style="display:none;">
+        <table>
+          <tr><th>Mã Use Case</th><td><span class="badge badge-primary">UC-08</span></td></tr>
+          <tr><th>Tên Use Case</th><td><strong>Đăng nhập tài khoản</strong></td></tr>
+          <tr><th>Tác nhân chính</th><td>Khách vãng lai</td></tr>
+          <tr><th>Mô tả</th><td>Nhập Email & Mật khẩu để xác thực tài khoản qua Supabase Auth.</td></tr>
+        </table>
+        <div class="flow-title">Luồng sự kiện chính:</div>
+        <ol>
+          <li>Mở màn hình Đăng nhập (`/auth/login`).</li>
+          <li>Nhập Email và Mật khẩu.</li>
+          <li>Bấm nút "Đăng nhập".</li>
+          <li>Hệ thống gửi yêu cầu xác thực tới Supabase Auth.</li>
+          <li>Chuyển về màn hình Tài khoản sau khi thành công.</li>
+        </ol>
+      </div>
+
+      <!-- Content Tab UC-01 -->
+      <div id="uc01" class="tab-content" style="display:none;">
+        <table>
+          <tr><th>Mã Use Case</th><td><span class="badge badge-primary">UC-01</span></td></tr>
+          <tr><th>Tên Use Case</th><td><strong>Xem Trang chủ & Sản phẩm nổi bật</strong></td></tr>
+          <tr><th>Tác nhân chính</th><td>Tất cả người dùng</td></tr>
+        </table>
+        <div class="flow-title">Luồng sự kiện chính:</div>
+        <ol>
+          <li>Người dùng mở app.</li>
+          <li>Hệ thống tải dữ liệu Catalog và hiển thị Banner Hero + Danh sách sản phẩm nổi bật.</li>
+        </ol>
+      </div>
+
+    </div>
+
+  </div>
+
+  <footer>
+    <p>© 2026 UNIQLO Mobile Project · Nhóm 23 · Đồ án Học phần Phát triển Ứng dụng Di động</p>
+  </footer>
+
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).style.display = 'block';
+      event.target.classList.add('active');
+    }
+  </script>
+
+</body>
+</html>

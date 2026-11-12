@@ -11,8 +11,17 @@ import { formatVnd } from '../../types/shop';
 import { loginTarget } from '../../navigation/routes';
 
 type Orders = Awaited<ReturnType<typeof getOrders>>;
-const statuses: Record<OrderStatus, string> = { pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', ready_for_pickup: 'Sẵn sàng nhận hàng',
-  completed: 'Hoàn thành', cancelled: 'Đã hủy', expired: 'Hết hạn nhận hàng' };
+const statuses: Record<OrderStatus, string> = {
+  pending: 'Chờ xác nhận',
+  confirmed: 'Đã xác nhận',
+  ready_for_pickup: 'Sẵn sàng nhận hàng',
+  shipping: 'Đang giao hàng',
+  delivered: 'Đã giao hàng',
+  delivery_failed: 'Giao hàng thất bại',
+  completed: 'Hoàn thành',
+  cancelled: 'Đã hủy',
+  expired: 'Hết hạn nhận hàng',
+};
 export default function OrdersScreen() {
   const { userId, loading: authLoading } = useCart();
   const [attempt, setAttempt] = useState(0);
@@ -34,7 +43,7 @@ export default function OrdersScreen() {
     {loading ? <ActivityIndicator accessibilityLabel="Đang tải đơn hàng" color={theme.colors.primary} style={{ marginTop: 40 }} />
       : !userId ? <DestinationState icon="receipt-outline" title="Theo dõi đơn hàng của bạn"
         description="Đăng nhập để xem đơn hàng và trạng thái nhận hàng tại cửa hàng."
-        actionLabel="Đăng nhập" onAction={() => router.push(loginTarget({ pathname: '/orders' }))} />
+        actionLabel="Đăng nhập" onAction={() => router.push(loginTarget({ pathname: '/orders' }) as any)} />
       : current?.error ? <DestinationState icon="cloud-offline-outline" title="Chưa tải được đơn hàng" description={current.error}
         actionLabel="Thử lại" onAction={() => { setResult(null); setAttempt(n => n + 1); }} />
       : !current?.orders.length ? <DestinationState icon="bag-outline" title="Bạn chưa có đơn hàng"

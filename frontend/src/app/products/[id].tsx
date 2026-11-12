@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image } from 'expo-image';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProductToolbar } from '../../components/navigation/ProductToolbar';
 import { CatalogStatus } from '../../components/shop/CatalogStatus';
 import { cartErrorMessage, useCart } from '../../context/CartContext';
+import { useRecentView } from '../../context/RecentViewContext';
 import { discountPercent } from '../../data/home-sections';
 import { useCatalog } from '../../features/catalog/useCatalog';
 import { hasSupabaseConfig } from '../../lib/supabase';
@@ -29,6 +30,7 @@ function ProductDetailContent({ id, params }: { id: string; params: RouteParams 
   const catalog = useCatalog();
   const { data, loading, error, retry } = catalog;
   const { addItem, items, loading: cartLoading, userId } = useCart();
+  const { addRecentItem } = useRecentView();
   const insets = useSafeAreaInsets();
   const product = data?.products.find(item => item.id === id);
   const [skuId, setSkuId] = useState(firstParam(params.variantId));
@@ -36,6 +38,11 @@ function ProductDetailContent({ id, params }: { id: string; params: RouteParams 
   const [quantity, setQuantity] = useState(Number.isInteger(requestedQuantity) && requestedQuantity >= 1 && requestedQuantity <= 10 ? requestedQuantity : 1);
   const [adding, setAdding] = useState(false);
   const [notice, setNotice] = useState('');
+
+  useEffect(() => {
+    if (product) addRecentItem(product);
+  }, [product?.id]);
+
   const variant = product?.variants.find(item => item.id === skuId) ?? product?.variants[0];
   const size = variant?.size ?? '', color = variant?.color ?? '';
   const sizes = [...new Set(product?.variants.map(item => item.size) ?? [])];
@@ -50,7 +57,7 @@ function ProductDetailContent({ id, params }: { id: string; params: RouteParams 
   async function add() {
     if (!product || !variant || busy || effectiveQuantity > addRemaining) return;
     if (hasSupabaseConfig && !userId) {
-      router.push(loginTarget(productTarget(id, { ...routeContext(params), variantId: variant.id, quantity: String(effectiveQuantity) })));
+      router.push(loginTarget(productTarget(id, { ...routeContext(params), variantId: variant.id, quantity: String(effectiveQuantity) })) as any);
       return;
     }
     setAdding(true); setNotice('');
@@ -65,14 +72,14 @@ function ProductDetailContent({ id, params }: { id: string; params: RouteParams 
     if (!product || !variant || busy || limit <= 0) return;
     const destination: AppTarget = { pathname: '/checkout', params: { ...routeContext(params), mode: 'buy-now',
       productId: product.id, variantId: variant.id, quantity: String(effectiveQuantity) } };
-    router.push(hasSupabaseConfig && !userId ? loginTarget(destination) : destination);
+    router.push((hasSupabaseConfig && !userId ? loginTarget(destination) : destination) as any);
   }
   return <View style={styles.screen}>
     <Stack.Screen options={{ header: () => <ProductToolbar product={product} /> }} />
     {loading || error || !data ? <CatalogStatus loading={loading} error={error} retry={retry} />
       : !product ? <View style={styles.missing}>
         <Text style={styles.name}>Sản phẩm không còn bán</Text>
-        <Pressable accessibilityRole="button" onPress={() => router.dismissTo(browseTarget(params))}><Text style={styles.link}>Xem sản phẩm khác</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={() => router.dismissTo(browseTarget(params) as any)}><Text style={styles.link}>Xem sản phẩm khác</Text></Pressable>
       </View> : <>
         <ScrollView contentContainerStyle={styles.content}>
           <View style={styles.picture}><HeroImage key={product.imageUrl ?? product.id} uri={product.imageUrl} /></View>
