@@ -18,4 +18,5 @@ export const FULFILLMENT_LABEL: Record<FulfillmentType, string> = {
   delivery: 'Giao hàng',
 };
 
-export const formatVnd = (n: number) => n.toLocaleString('vi-VN') + ' ₫';
+/** Same "₫149.000" style as types/shop formatVnd and components/ui/Price. */
+export const formatVnd = (n: number) => '₫' + Math.trunc(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');

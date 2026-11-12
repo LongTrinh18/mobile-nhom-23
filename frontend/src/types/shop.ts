@@ -56,7 +56,8 @@ export type CartItem = {
   imageUrl?: string;
   unitPriceVnd: number;
   quantity: number;
-  maxAvailable: number; // UI-only snapshot; re-check stock before real order
+  maxAvailable: number; // UI-only snapshot at the selected pickup branch; re-check stock before real order
+  bestAvailable?: number; // UI-only snapshot: most any single active store can supply (cap 10)
 };
 
 export function cartItemKey(skuId: string, branchId: string): string {
@@ -64,6 +65,6 @@ export function cartItemKey(skuId: string, branchId: string): string {
 }
 
 export function formatVnd(value: number): string {
-  // Intl support can vary on native JS engines; use a predictable fallback.
-  return `${Math.trunc(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.')} ₫`;
+  // Shop style "₫149.000", the same as components/ui/Price. Intl support varies on native JS engines.
+  return '₫' + Math.trunc(value).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 }

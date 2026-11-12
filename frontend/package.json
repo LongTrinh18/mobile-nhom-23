@@ -3,6 +3,7 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "dependencies": {
+    "@expo-google-fonts/be-vietnam-pro": "^0.4.1",
     "@expo/ui": "~57.0.26",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -52,7 +53,9 @@
     "test:home": "node --test scripts/home-sections.test.cjs",
     "test:product": "node --test scripts/product-flow.test.cjs",
     "android:build": "expo run:android",
-    "test:auth": "node --test scripts/auth.test.cjs"
+    "test:auth": "node --test scripts/auth.test.cjs",
+    "test:checkout": "node --test scripts/checkout-flow.test.cjs",
+    "test": "node --test \"scripts/*.test.cjs\""
   },
   "private": true
 }

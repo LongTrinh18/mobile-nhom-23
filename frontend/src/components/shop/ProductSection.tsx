@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Text } from '../ui/Text';
 import { theme } from '../../theme/theme';
 import type { Product } from '../../types/shop';
 import { Button } from './Button';
@@ -24,7 +25,7 @@ export type ProductSectionProps = {
 
 /** Presentational product collection; callers own fetching, filtering, and navigation overrides. */
 export function ProductSection({ products, title, subtitle, layout = 'grid', horizontalCardWidth = 168,
-  onProductPress, onSeeAll, seeAllLabel = 'Xem tất cả', loading = false, error, onRetry,
+  onProductPress, onSeeAll, seeAllLabel = 'Xem thêm', loading = false, error, onRetry,
   emptyTitle = 'Chưa có sản phẩm', emptyDescription = 'Sản phẩm đang được cập nhật.', emptyAction, style,
 }: ProductSectionProps) {
   return <View style={[styles.section, style]}>
@@ -34,7 +35,7 @@ export function ProductSection({ products, title, subtitle, layout = 'grid', hor
         {!!subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       </View>
       {onSeeAll && <Pressable accessibilityRole="button" accessibilityLabel={title ? seeAllLabel + ' · ' + title : seeAllLabel}
-        onPress={onSeeAll} style={styles.seeAll}><Text style={styles.seeAllText}>{seeAllLabel} →</Text></Pressable>}
+        onPress={onSeeAll} style={styles.seeAll} hitSlop={6}><Text style={styles.seeAllText}>{seeAllLabel} ›</Text></Pressable>}
     </View>}
     {loading ? <View style={styles.state}>
       <ActivityIndicator accessibilityLabel="Đang tải sản phẩm" color={theme.colors.primary} />
@@ -51,21 +52,22 @@ export function ProductSection({ products, title, subtitle, layout = 'grid', hor
       contentContainerStyle={styles.horizontal}>
       {products.map(product => <ProductCard key={product.id} product={product} width={horizontalCardWidth} onPress={onProductPress} />)}
     </ScrollView> : <View style={styles.grid}>
-      {products.map(product => <ProductCard key={product.id} product={product} width="48%" onPress={onProductPress} />)}
+      {products.map(product => <ProductCard key={product.id} product={product} width="49%" onPress={onProductPress} />)}
     </View>}
   </View>;
 }
 const styles = StyleSheet.create({
-  section: { gap: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' },
-  heading: { flex: 1, minWidth: 120, gap: 5 },
-  title: { fontSize: 20, fontWeight: '800', color: theme.colors.ink },
-  subtitle: { color: theme.colors.muted, fontSize: 13, lineHeight: 19 },
-  seeAll: { minHeight: 44, justifyContent: 'center', paddingVertical: 8 },
-  seeAllText: { color: theme.colors.primary, fontSize: 13, fontWeight: '700' },
-  grid: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 24 },
-  horizontal: { gap: 14, paddingBottom: 4 },
-  state: { paddingVertical: 32, paddingHorizontal: 16, minHeight: 180, gap: 14, alignItems: 'center', justifyContent: 'center' },
-  stateTitle: { fontSize: 18, fontWeight: '700', color: theme.colors.ink, textAlign: 'center' },
-  description: { color: theme.colors.muted, lineHeight: 21, textAlign: 'center' },
+  section: { gap: 10 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  heading: { flex: 1, minWidth: 120, gap: 2 },
+  title: { fontSize: 16, fontWeight: '700', color: theme.colors.ink },
+  subtitle: { color: theme.colors.muted, fontSize: 12, lineHeight: 17 },
+  seeAll: { minHeight: 36, justifyContent: 'center', paddingLeft: 8 },
+  seeAllText: { color: theme.colors.muted, fontSize: 12, fontWeight: '500' },
+  grid: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: 8 },
+  horizontal: { gap: 8, paddingRight: 12 },
+  state: { paddingVertical: 28, paddingHorizontal: 16, minHeight: 160, gap: 12, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: theme.colors.surface, borderRadius: theme.radius.lg },
+  stateTitle: { fontSize: 16, fontWeight: '700', color: theme.colors.ink, textAlign: 'center' },
+  description: { color: theme.colors.muted, fontSize: 13, lineHeight: 19, textAlign: 'center' },
 });

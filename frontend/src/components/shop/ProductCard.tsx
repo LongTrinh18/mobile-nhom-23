@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { Image } from 'expo-image';
 import { router, useLocalSearchParams, usePathname } from 'expo-router';
-import { Pressable, StyleSheet, Text, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
+import { Text } from '../ui/Text';
+import { Price } from '../ui/Price';
 import { theme } from '../../theme/theme';
 import { formatVnd, type Product } from '../../types/shop';
 import { discountPercent } from '../../data/home-sections';
+import { swatchColor, swatchNeedsBorder } from '../../data/colors';
 import { productTarget, routeContext } from '../../navigation/routes';
+import { ProductPicture } from './ProductPicture';
 
 export type ProductCardProps = {
   product: Product;
@@ -15,15 +16,21 @@ export type ProductCardProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-function ProductImage({ uri }: { uri?: string }) {
-  const [failed, setFailed] = useState(false);
-  return uri && !failed
-    ? <Image source={{ uri }} style={styles.image} contentFit="cover" cachePolicy="memory-disk"
-        accessible={false} onError={() => setFailed(true)} />
-    : <View style={styles.placeholder} accessible={false}>
-        <Ionicons name="shirt-outline" size={42} color={theme.colors.muted} />
-        <Text style={styles.placeholderText}>Chưa có ảnh</Text>
-      </View>;
+export function Swatches({ colors, size = 10 }: { colors: string[]; size?: number }) {
+  return <View style={styles.swatches}>
+    {colors.slice(0, 5).map(name => {
+      const hex = swatchColor(name);
+      return <View key={name} accessibilityLabel={'Màu ' + name}
+        style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: hex }, swatchNeedsBorder(hex) && styles.swatchBorder]} />;
+    })}
+    {colors.length > 5 && <Text style={styles.more}>+{colors.length - 5}</Text>}
+  </View>;
+}
+
+export function Tag({ label, tone = 'primary' }: { label: string; tone?: 'primary' | 'neutral' | 'success' }) {
+  return <View style={[styles.tag, tone === 'neutral' && styles.tagNeutral, tone === 'success' && styles.tagSuccess]}>
+    <Text style={[styles.tagText, tone === 'neutral' && styles.tagTextNeutral, tone === 'success' && styles.tagTextSuccess]}>{label}</Text>
+  </View>;
 }
 
 /** A single product tile. Its container owns spacing and column width. */
@@ -31,7 +38,8 @@ export function ProductCard({ product, onPress, width = '100%', style }: Product
   const pathname = usePathname();
   const params = useLocalSearchParams();
   const discount = discountPercent(product);
-  const onSale = product.basePriceVnd != null && product.basePriceVnd > product.priceVnd && product.priceVnd > 0;
+  const sizes = [...new Set(product.variants.map(variant => variant.size))];
+  const colors = [...new Set(product.variants.map(variant => variant.color))];
   function openProduct() {
     if (onPress) onPress(product);
     else router.push(productTarget(product.id, { ...routeContext(params), origin: pathname === '/' ? 'home' : pathname === '/cart' ? 'cart' : 'products' }));
@@ -39,27 +47,36 @@ export function ProductCard({ product, onPress, width = '100%', style }: Product
   return <Pressable accessibilityRole="button" accessibilityLabel={'Xem ' + product.name + ', ' + formatVnd(product.priceVnd)}
     accessibilityHint="Mở chi tiết sản phẩm" onPress={openProduct}
     style={({ pressed }) => [styles.card, { width }, style, pressed && styles.pressed]}>
-    <View style={styles.media}>
-      <ProductImage key={product.imageUrl ?? product.id} uri={product.imageUrl} />
-      {discount > 0 && <View style={styles.discountBadge}><Text style={styles.discountText}>−{discount}%</Text></View>}
+    <ProductPicture product={product} style={styles.media} />
+    <View style={styles.body}>
+      <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
+      <View style={styles.tags}>
+        {discount > 0 && <Tag label={'-' + discount + '%'} />}
+        {sizes.length > 0 && <Tag tone="neutral" label={sizes.length > 1 ? sizes[0] + '–' + sizes[sizes.length - 1] : sizes[0]} />}
+        <Swatches colors={colors} />
+      </View>
+      <View style={styles.priceRow}>
+        <Price value={product.priceVnd} size={16} />
+        {discount > 0 && <Price value={product.basePriceVnd!} size={11} weight="500" color={theme.colors.subtle} strike />}
+      </View>
     </View>
-    <Text style={styles.category} numberOfLines={1}>{product.category.toLocaleUpperCase('vi')}</Text>
-    <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
-    <Text style={styles.price}>{formatVnd(product.priceVnd)}</Text>
-    {onSale && <Text style={styles.originalPrice}>{formatVnd(product.basePriceVnd!)}</Text>}
   </Pressable>;
 }
 const styles = StyleSheet.create({
-  card: { minWidth: 0 },
-  pressed: { opacity: 0.7 },
-  media: { width: '100%', aspectRatio: 3 / 4, backgroundColor: '#F1F0ED', borderRadius: theme.radius.sm, overflow: 'hidden', marginBottom: 10 },
-  discountBadge: { position: 'absolute', left: 8, top: 8, backgroundColor: theme.colors.primary, paddingVertical: 4, paddingHorizontal: 7, borderRadius: 4 },
-  discountText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  originalPrice: { color: theme.colors.muted, fontSize: 12, textDecorationLine: 'line-through', marginTop: 3 },
-  image: { width: '100%', height: '100%' },
-  placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  placeholderText: { color: theme.colors.muted, fontSize: 12 },
-  category: { fontSize: 10, color: theme.colors.muted, letterSpacing: 1, marginBottom: 5 },
-  name: { fontSize: 14, lineHeight: 20, fontWeight: '600', color: theme.colors.ink, minHeight: 40 },
-  price: { fontSize: 16, fontWeight: '800', color: theme.colors.primary, marginTop: 6 },
+  card: { minWidth: 0, backgroundColor: theme.colors.surface, borderRadius: theme.radius.md, overflow: 'hidden' },
+  pressed: { opacity: 0.85 },
+  media: { width: '100%', aspectRatio: 1 },
+  body: { padding: 8, gap: 6 },
+  name: { fontSize: 13, lineHeight: 18, color: theme.colors.ink, minHeight: 36 },
+  tags: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, minHeight: 18 },
+  tag: { paddingHorizontal: 4, height: 18, justifyContent: 'center', borderRadius: 3, backgroundColor: theme.colors.primarySoft },
+  tagNeutral: { backgroundColor: theme.colors.soft },
+  tagSuccess: { backgroundColor: theme.colors.successSoft },
+  tagText: { fontSize: 10, lineHeight: 13, fontWeight: '600', color: theme.colors.primary },
+  tagTextNeutral: { color: theme.colors.muted },
+  tagTextSuccess: { color: theme.colors.success },
+  swatches: { flexDirection: 'row', alignItems: 'center', gap: 3, marginLeft: 2 },
+  swatchBorder: { borderWidth: 1, borderColor: theme.colors.borderStrong },
+  more: { fontSize: 10, color: theme.colors.muted, marginLeft: 2 },
+  priceRow: { flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', columnGap: 6 },
 });

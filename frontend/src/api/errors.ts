@@ -69,6 +69,10 @@ export function friendlyMessage(e: unknown): string {
     case 'INVALID_TRANSITION':    return 'Không thể thực hiện thao tác này với đơn ở trạng thái hiện tại.';
     case 'ORDER_NOT_FOUND':       return 'Không tìm thấy đơn hàng.';
     case 'FORBIDDEN':             return 'Bạn không có quyền thực hiện thao tác này.';
-    default:                      return 'Có lỗi xảy ra, vui lòng thử lại.';
+    case 'USER_NOT_FOUND':        return 'Không tìm thấy tài khoản.';
+    case 'INVALID_REQUEST':       return 'Thông tin gửi lên chưa hợp lệ. Vui lòng tải lại và thử lại.';
+    default:
+      if (/network|fetch|timeout/i.test(e.detail)) return 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.';
+      return 'Có lỗi xảy ra, vui lòng thử lại.';
   }
 }

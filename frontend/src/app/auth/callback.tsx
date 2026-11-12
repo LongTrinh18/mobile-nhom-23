@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
+import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/shop/Button';
 import { authErrorMessage, completeGoogleLogin, googleCallbackUrl } from '../../services/auth-service';
 import { theme } from '../../theme/theme';
