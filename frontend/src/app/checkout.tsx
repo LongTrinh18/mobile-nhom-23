@@ -158,6 +158,8 @@ export default function CheckoutScreen() {
       } });
     } catch (e) {
       const message = cartErrorMessage(e);
+      // Dev builds print the raw server error in the Metro terminal, so a failed order can be diagnosed from the phone.
+      if (__DEV__) console.warn('[checkout] place order failed', e instanceof Error ? { message: e.message, cause: e.cause } : e);
       setLocalError(message);
       notify('Chưa đặt được hàng', message);
     } finally { setPlacing(false); }
