@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useGlobalSearchParams, usePathname } from 'expo-router';
+import { useRouter, useGlobalSearchParams, usePathname } from 'expo-router';
 import { Keyboard, Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { fonts, Text } from '../ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { theme } from '../../theme/theme';
 import { useLogicalBack } from '../../navigation/useLogicalBack';
 
 function SearchField({ initialQuery }: { initialQuery: string }) {
+  const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
   function search() {
     Keyboard.dismiss();
@@ -31,6 +32,7 @@ function SearchField({ initialQuery }: { initialQuery: string }) {
   </View>;
 }
 export function TopToolbar({ backDisabled = false }: { backDisabled?: boolean }) {
+  const router = useRouter();
   const goBack = useLogicalBack(backDisabled);
   const insets = useSafeAreaInsets();
   const pathname = usePathname();

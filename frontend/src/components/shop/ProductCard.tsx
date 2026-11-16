@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams, usePathname } from 'expo-router';
+import { useRouter, useLocalSearchParams, usePathname } from 'expo-router';
 import { Pressable, StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
 import { Text } from '../ui/Text';
 import { Price } from '../ui/Price';
@@ -35,6 +35,7 @@ export function Tag({ label, tone = 'primary' }: { label: string; tone?: 'primar
 
 /** A single product tile. Its container owns spacing and column width. */
 export function ProductCard({ product, onPress, width = '100%', style }: ProductCardProps) {
+  const router = useRouter();
   const pathname = usePathname();
   const params = useLocalSearchParams();
   const discount = discountPercent(product);

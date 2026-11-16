@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useGlobalSearchParams } from 'expo-router';
+import { useRouter, useGlobalSearchParams } from 'expo-router';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '../ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import { theme } from '../../theme/theme';
 import type { Product } from '../../types/shop';
 
 export function ProductToolbar({ product }: { product?: Product }) {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const goBack = useLogicalBack();
   const params = useGlobalSearchParams();

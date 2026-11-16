@@ -3,9 +3,11 @@ import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TopToolbar } from '../../components/navigation/TopToolbar';import { theme } from '../../theme/theme';
 
+export const unstable_settings = { anchor: 'index' };
+
 export default function MainTabsLayout() {
   const insets = useSafeAreaInsets();
-  return <Tabs initialRouteName="index" backBehavior="initialRoute" screenOptions={{
+  return <Tabs backBehavior="initialRoute" screenOptions={{
     header: () => <TopToolbar />,
     tabBarActiveTintColor: theme.colors.primary, tabBarInactiveTintColor: theme.colors.muted,
     tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
@@ -14,11 +16,12 @@ export default function MainTabsLayout() {
     tabBarHideOnKeyboard: true,
   }}>
     <Tabs.Screen name="index" options={{ title: 'Trang chủ', tabBarAccessibilityLabel: 'Trang chủ',
-      tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} size={23} color={color} /> }} />
+      tabBarIcon: ({ focused }) => <Ionicons name={focused ? 'home' : 'home-outline'} size={23} color={focused ? theme.colors.primary : theme.colors.muted} /> }} />
     <Tabs.Screen name="orders" options={{ title: 'Đơn hàng', tabBarAccessibilityLabel: 'Đơn hàng',
-      tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'receipt' : 'receipt-outline'} size={23} color={color} /> }} />
+      tabBarIcon: ({ focused }) => <Ionicons name={focused ? 'receipt' : 'receipt-outline'} size={23} color={focused ? theme.colors.primary : theme.colors.muted} /> }} />
     <Tabs.Screen name="notifications" options={{ title: 'Thông báo', tabBarAccessibilityLabel: 'Thông báo',
-      tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'notifications' : 'notifications-outline'} size={23} color={color} /> }} />
-    <Tabs.Screen name="account" options={{ title: 'Tôi', tabBarAccessibilityLabel: 'Tôi, tài khoản',      tabBarIcon: ({ color, focused }) => <Ionicons name={focused ? 'person' : 'person-outline'} size={23} color={color} /> }} />
+      tabBarIcon: ({ focused }) => <Ionicons name={focused ? 'notifications' : 'notifications-outline'} size={23} color={focused ? theme.colors.primary : theme.colors.muted} /> }} />
+    <Tabs.Screen name="account" options={{ title: 'Tôi', tabBarAccessibilityLabel: 'Tôi, tài khoản',
+      tabBarIcon: ({ focused }) => <Ionicons name={focused ? 'person' : 'person-outline'} size={23} color={focused ? theme.colors.primary : theme.colors.muted} /> }} />
   </Tabs>;
 }

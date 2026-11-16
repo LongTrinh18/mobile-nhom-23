@@ -1,6 +1,6 @@
 import { useState, type ComponentProps } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/shop/Button';
@@ -23,6 +23,7 @@ function MenuItem({ icon, label, detail, onPress }: { icon: IconName; label: str
 }
 
 export default function AccountScreen() {
+  const router = useRouter();
   const { user, profile, initializing, profileLoading, error, refreshProfile, signOut } = useAuth();
   const { count } = useCart();
   const [signingOut, setSigningOut] = useState(false);

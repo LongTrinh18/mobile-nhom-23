@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/shop/Button';
@@ -12,6 +12,7 @@ import { authErrorMessage, userAuthError } from '../../services/auth-service';
 import { firstParam, safeReturnTarget, targetUrl } from '../../navigation/routes';
 
 export default function RegisterScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams();
   const destination = safeReturnTarget(firstParam(params.returnTo));
   const returnTo = targetUrl(destination);

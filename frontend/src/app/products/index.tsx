@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { ProductSection } from '../../components/shop/ProductSection';
@@ -21,6 +21,7 @@ function sortProducts(products: Product[], sort: SortKey) {
   return [...products].sort((a, b) => sort === 'price_asc' ? a.priceVnd - b.priceVnd : b.priceVnd - a.priceVnd);
 }
 export default function ProductListScreen() {
+  const router = useRouter();
   const catalog = useCatalog();
   const { data } = catalog;
   const [sort, setSort] = useState<SortKey>('default');

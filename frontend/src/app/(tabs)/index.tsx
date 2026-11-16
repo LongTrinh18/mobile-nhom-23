@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View, type ScrollViewInstance } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { Price } from '../../components/ui/Price';
 import { HomeProductSections } from '../../components/shop/HomeProductSections';
@@ -28,6 +28,7 @@ const perks: { icon: IconName; text: string }[] = [
 function GroupPage({ group, catalog, merchandising, showRecent }: {
   group: CustomerGroup; catalog: ReturnType<typeof useCatalog>; merchandising: ReturnType<typeof useHomeMerchandising>; showRecent: boolean;
 }) {
+  const router = useRouter();
   const { recentItems, clearRecentItems } = useRecentView();
   const hero = heroCopy[group.key];
   const browse = (section = '') => router.push({ pathname: '/products', params: { audience: group.key, section } });
@@ -105,7 +106,7 @@ export default function HomeScreen() {
   const window = useWindowDimensions();
   const [pageWidth, setPageWidth] = useState(window.width);
   const [activeIndex, setActiveIndex] = useState(0);
-  const pager = useRef<ScrollView>(null);
+  const pager = useRef<ScrollViewInstance>(null);
   useEffect(() => {
     pager.current?.scrollTo({ x: activeIndex * pageWidth, animated: false });
   }, [pageWidth, activeIndex]);

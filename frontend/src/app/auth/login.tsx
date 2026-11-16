@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { Button } from '../../components/shop/Button';
@@ -13,6 +13,7 @@ import { authErrorMessage, loadMyProfile, LoginCancelled, signInWithGoogle, user
 import { firstParam, safeReturnTarget, targetUrl } from '../../navigation/routes';
 
 export default function LoginScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams();
   const destination = safeReturnTarget(firstParam(params.returnTo));
   const [email, setEmail] = useState(firstParam(params.email));

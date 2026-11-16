@@ -28,9 +28,13 @@ mobile-nhom-23/
 └── docs/                     Tài liệu nhóm
 ```
 
+## Expo SDK 58
+
+Frontend đã nâng lên Expo SDK 58, React 19.3 và React Native 0.88. Xem [hướng dẫn nâng cấp và chạy Android](docs/SDK58_UPGRADE.md). Sau khi đổi SDK cần build/cài lại development build; bản SDK 57 cũ không dùng cho SDK 58.
+
 ## Bắt đầu nhanh
 
-Yêu cầu: Node.js 20+, app **Expo Go** trên điện thoại (hoặc máy ảo Android).
+Yêu cầu: Node.js 22.13+ (nhánh 22) hoặc 24.3+ (nhánh 24), app **Expo Go** trên điện thoại (hoặc máy ảo Android).
 
 ```bash
 git clone <repo-url>

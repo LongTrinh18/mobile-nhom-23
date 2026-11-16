@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProductToolbar } from '../../components/navigation/ProductToolbar';
@@ -38,6 +38,7 @@ export default function ProductDetailScreen() {
   return <ProductDetailContent key={id} id={id} params={params} />;
 }
 function ProductDetailContent({ id, params }: { id: string; params: RouteParams }) {
+  const router = useRouter();
   const catalog = useCatalog();
   const { data, loading, error, retry } = catalog;
   const { addItem, items, count, loading: cartLoading, userId } = useCart();

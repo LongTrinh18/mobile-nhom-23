@@ -1,9 +1,10 @@
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 import { Text } from '../components/ui/Text';
 import { DestinationState } from '../components/navigation/DestinationState';
 import { theme } from '../theme/theme';
 export default function ChatbotScreen() {
+  const router = useRouter();
   return <ScrollView style={styles.page} contentContainerStyle={styles.content}>
     <Text accessibilityRole="header" style={styles.title}>Trợ lý mua sắm AI</Text>
     <DestinationState icon="chatbubbles-outline" title="Sắp ra mắt"

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +20,7 @@ import { checkBranches } from '../services/checkout';
 import { theme } from '../theme/theme';
 
 export default function CartScreen() {
+  const router = useRouter();
   const {
     items, count, selectedKeys, selectedItems, selectedCount, selectedTotalVnd, loading, error, userId, branches, branchId,
     updateQuantity, removeItem, removeItems, clearCart, refresh, selectBranch, toggleSelectItem, toggleSelectAll,

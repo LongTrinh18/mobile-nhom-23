@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { canCustomerCancel, cancelOrder, getOrderDetail, getOrders, type OrderListItem } from '../../api/orderApi';
@@ -124,6 +124,7 @@ function OrderCard({ order, onChanged }: { order: OrderListItem; onChanged: () =
 }
 
 export default function OrdersScreen() {
+  const router = useRouter();
   const { userId, loading: authLoading } = useCart();
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState<(typeof filters)[number]['key']>('all');

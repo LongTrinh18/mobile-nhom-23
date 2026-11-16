@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { useRouter, Stack, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ui/Text';
@@ -11,6 +11,7 @@ import { useLogicalBack } from '../../navigation/useLogicalBack';
 // On web the opener performs the exchange; this popup only returns its URL.
 const browserCompletion = WebBrowser.maybeCompleteAuthSession();
 export default function AuthCallbackScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams();
   const [error, setError] = useState<string | null>(null);
   const query = new URLSearchParams();
@@ -27,7 +28,7 @@ export default function AuthCallbackScreen() {
       if (active) router.dismissTo(destination);
     }).catch(e => { if (active) setError(authErrorMessage(e)); });
     return () => { active = false; };
-  }, [callback]);
+  }, [callback, router]);
   return <View style={styles.page}>
     <Stack.Screen options={{ headerShown: false }} />
     {error ? <><Text accessibilityRole="alert" style={styles.note}>{error}</Text>

@@ -1,9 +1,10 @@
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { DestinationState } from '../../components/navigation/DestinationState';
 import { theme } from '../../theme/theme';
 export default function NotificationsScreen() {
+  const router = useRouter();
   return <ScrollView style={styles.page} contentContainerStyle={styles.content}>
     <Text accessibilityRole="header" style={styles.title}>Thông báo</Text>
     <DestinationState icon="notifications-outline" title="Chưa có thông báo"

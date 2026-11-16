@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ui/Text';
 import { DestinationState } from '../../components/navigation/DestinationState';
@@ -14,6 +14,7 @@ type Params = { orderId?: string; orderCode?: string; fulfillmentType?: string; 
 const money = (value?: string) => formatVnd(Number(value ?? 0) || 0);
 
 export default function OrderSuccessScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams<Params>();
   const delivery = params.fulfillmentType === 'delivery';
   if (!params.orderId || !params.orderCode) {

@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { Text } from '../ui/Text';
 import { collectionsForAudience, selectHomeProducts, type HomeFeedKey } from '../../data/home-sections';
@@ -17,6 +17,7 @@ const shelves: { key: Exclude<HomeFeedKey, 'new'>; title: string; subtitle?: str
 
 /** Each audience page uses the same catalog and merchandise requests from the home screen. */
 export function HomeProductSections({ audience, catalog, merchandising }: Props) {
+  const router = useRouter();
   const products = catalog.data?.products ?? [];
   const collections = merchandising.collections.data ?? [];
   const availableCollections = collectionsForAudience(collections, products, audience);

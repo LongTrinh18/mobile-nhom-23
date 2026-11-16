@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ComponentProps } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Stack, router, useLocalSearchParams } from 'expo-router';
+import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../components/ui/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,6 +57,7 @@ function FulfillmentOption({ icon, title, subtitle, selected, onPress }: { icon:
 }
 
 export default function CheckoutScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams();
   const intent = parseCheckoutIntent(params);
   const direct = intent.kind === 'buy-now';
