@@ -47,6 +47,11 @@ export function unwrap<T>(res: { data: T | null; error: PostgrestError | null })
   return res.data as T;
 }
 
+function errorCode(raw: unknown): string | undefined {
+  const code = (raw as { code?: unknown } | null | undefined)?.code;
+  return typeof code === 'string' && /^[A-Z0-9_]{3,12}$/.test(code) ? code : undefined;
+}
+
 /** Câu thông báo hiển thị cho người dùng */
 export function friendlyMessage(e: unknown): string {
   if (!(e instanceof ApiError)) return 'Có lỗi xảy ra, vui lòng thử lại.';
@@ -73,6 +78,7 @@ export function friendlyMessage(e: unknown): string {
     case 'INVALID_REQUEST':       return 'Thông tin gửi lên chưa hợp lệ. Vui lòng tải lại và thử lại.';
     default:
       if (/network|fetch|timeout/i.test(e.detail)) return 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.';
-      return 'Có lỗi xảy ra, vui lòng thử lại.';
+      // Unknown errors keep their Postgres/PostgREST code (e.g. 22P02, PGRST202) so a screenshot is enough to diagnose.
+      return 'Có lỗi xảy ra, vui lòng thử lại.' + (errorCode(e.cause) ? ` (mã lỗi: ${errorCode(e.cause)})` : '');
   }
 }
