@@ -1,7 +1,7 @@
 /** Danh mục, chi nhánh, sản phẩm, tồn kho, bảng size, gợi ý.  Endpoint: /rest/v1/v_product_catalog, product_variants, … */
 import { db } from './client';
 import type {
-  Branch, BranchFulfillment, Category, CatalogItem, Variant, Media, OrderLineInput, StockRow, SizeChartRow,
+  Branch, BranchFulfillment, Category, CatalogItem, Variant, Media, OrderLineInput, StockRow, SizeChartRow, Voucher,
 } from './types';
 import { unwrap } from './errors';
 
@@ -106,6 +106,11 @@ export async function findFulfillingBranches(
       p_lng: coords?.lng ?? null,
     }),
   ) as BranchFulfillment[];
+}
+
+/** Mã giảm giá đang dùng (RLS: mọi người xem mã is_active). Chỉ để xem trước; place_order kiểm tra lại. */
+export async function getVouchers(): Promise<Voucher[]> {
+  return unwrap(await db().from('vouchers').select('*').eq('is_active', true).order('code')) as Voucher[];
 }
 
 /** Luật gợi ý "Thường mua cùng" cho 1 sản phẩm (có dữ liệu sau khi chạy Apriori) */

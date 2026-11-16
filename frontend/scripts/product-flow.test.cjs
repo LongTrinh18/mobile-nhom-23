@@ -1,10 +1,9 @@
 const assert = require('node:assert/strict');
-const { test, before, after } = require('node:test');
+const { test } = require('node:test');
 const fs = require('node:fs');
 const path = require('node:path');
 const Module = require('node:module');
 const ts = require('typescript');
-const { PGlite } = require('@electric-sql/pglite');
 const root = path.join(__dirname, '..');
 function loader(mocks = {}) {
   const cache = new Map();
@@ -88,65 +87,28 @@ test('native sharing opens the share sheet with a deep link containing only the 
   assert.ok(payload.message.includes('40.000'));
   assert.ok(!payload.message.includes('access_token') && !payload.message.includes('returnTo'));
 });
-test('buy-now API uses the independent RPC rather than the cart-consuming RPC', async () => {
-  let called;
-  const api = loader({ './client': { db: () => ({ rpc: async (name, input) => { called = { name, input }; return { data: [{ order_id: id(8), order_code: 'DH-8', total_amount: 80000 }], error: null }; } }) } })('src/api/orderApi.ts');
-  await api.placeBuyNowOrder({ branchId: id(4), items: [{ variantId: id(2), quantity: 2 }], customerName: 'Test', customerPhone: '0912345678' });
-  assert.equal(called.name, 'place_buy_now_order'); assert.deepEqual(called.input.p_items, [{ variant_id: id(2), quantity: 2 }]);
+test('buy-now uses place_order (cart untouched) while cart checkout uses place_cart_order, both with a UUID key', async () => {
+  const calls = [];
+  const api = loader({ './client': { db: () => ({ rpc: async (name, input) => { calls.push({ name, input });
+    return { data: [{ order_id: id(8), order_code: 'DH-8', total_amount: 80000, is_duplicate: false }], error: null }; } }) } })('src/api/orderApi.ts');
+  const input = { fulfillmentType: 'delivery', deliveryAddress: '1 Lê Lợi', idempotencyKey: id(77), voucherCode: 'UNIQLO10',
+    items: [{ variantId: id(2), quantity: 2 }], customerName: 'Test', customerPhone: '0912345678' };
+  await api.placeOrder(input);
+  await api.placeCartOrder({ ...input, fulfillmentType: 'pickup', branchId: id(4), deliveryAddress: undefined });
+  assert.deepEqual(calls.map(call => call.name), ['place_order', 'place_cart_order']);
+  assert.deepEqual(calls[0].input.p_items, [{ variant_id: id(2), quantity: 2 }]);
+  assert.equal(calls[0].input.p_fulfillment_type, 'delivery');
+  assert.equal(calls[0].input.p_delivery_address, '1 Lê Lợi');
+  assert.equal(calls[0].input.p_voucher_code, 'UNIQLO10');
+  assert.equal(calls[0].input.p_idempotency_key, id(77));
+  assert.equal(calls[1].input.p_branch_id, id(4));
+  assert.equal(calls[1].input.p_delivery_address, null);
 });
-
-const db = new PGlite();
-const migration = fs.readFileSync(path.join(root, '../database/migrations/07_buy_now.sql'), 'utf8');
-before(async () => {
-  await db.exec(`
-    create role anon; create role authenticated;
-    create schema auth;
-    create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('test.user',true),'')::uuid; $$;
-    grant usage on schema auth to anon, authenticated;
-    create table public.products (id uuid primary key, is_active boolean, base_price int, sale_price int);
-    create table public.product_variants (id uuid primary key, product_id uuid, sku text, is_active boolean);
-    create table public.branches (id uuid primary key, is_active boolean);
-    create table public.inventory (id uuid primary key, branch_id uuid, variant_id uuid, quantity int, reserved_quantity int);
-    create sequence public.order_code_seq;
-    create table public.orders (id uuid primary key default gen_random_uuid(), order_code text unique, user_id uuid, branch_id uuid,
-      total_amount int, customer_name text, customer_phone text, note text);
-    create table public.order_items (order_id uuid, variant_id uuid, product_id uuid, quantity int, unit_price int);
-    create table public.cart_items (user_id uuid, variant_id uuid, quantity int);
-    insert into public.products values ('${id(1)}',true,50000,40000);
-    insert into public.product_variants values ('${id(2)}','${id(1)}','TEE-M',true);
-    insert into public.branches values ('${id(4)}',true), ('${id(5)}',false);
-    insert into public.inventory values ('${id(6)}','${id(4)}','${id(2)}',10,0);
-    insert into public.cart_items values ('${id(9)}','${id(2)}',5), ('${id(9)}','${id(7)}',3);
-  `);
-  await db.exec(migration);
-  await db.exec(migration);
+test('order keys are RFC 4122 UUIDs, never the old "idemp-..." strings', () => {
+  const { uuidv4, isUuid } = loader()('src/lib/uuid.ts');
+  const keys = new Set(Array.from({ length: 50 }, () => uuidv4()));
+  assert.equal(keys.size, 50);
+  for (const key of keys) assert.ok(isUuid(key), key);
+  assert.equal(isUuid('idemp-1731400000000-abc123'), false);
 });
-after(async () => { await db.close(); });
-async function buy(quantity, branch = id(4)) {
-  return db.query('select * from public.place_buy_now_order($1,$2::jsonb,$3,$4,null)',
-    [branch, JSON.stringify([{ variant_id: id(2), quantity }]), 'Test Customer', '0912345678']);
-}
-test('buy-now SQL preserves every cart row and reserves only the requested SKU quantity at server price', async () => {
-  await db.query("select set_config('test.user',$1,false)", [id(9)]);
-  const beforeCart = (await db.query('select * from cart_items order by variant_id')).rows;
-  const result = await buy(2);
-  assert.equal(result.rows[0].total_amount, 80000);
-  assert.equal((await db.query('select reserved_quantity from inventory')).rows[0].reserved_quantity, 2);
-  assert.deepEqual((await db.query('select * from cart_items order by variant_id')).rows, beforeCart);
-  assert.equal((await db.query('select quantity from order_items')).rows[0].quantity, 2);
-});
-test('failed buy-now checks roll back all writes for stock, quantity, auth and inactive branches', async () => {
-  await assert.rejects(buy(10), /OUT_OF_STOCK/);
-  await assert.rejects(buy(11), /INVALID_QUANTITY/);
-  await assert.rejects(buy(1, id(5)), /INVALID_BRANCH/);
-  await db.query("select set_config('test.user','',false)");
-  await assert.rejects(buy(1), /NOT_AUTHENTICATED/);
-  assert.equal((await db.query('select count(*)::int as n from orders')).rows[0].n, 1);
-  assert.equal((await db.query('select reserved_quantity from inventory')).rows[0].reserved_quantity, 2);
-  assert.equal((await db.query('select sum(quantity)::int as n from cart_items')).rows[0].n, 8);
-});
-test('anonymous users cannot execute the buy-now transaction', async () => {
-  await db.exec('set role anon');
-  try { await assert.rejects(buy(1), /permission denied/); }
-  finally { await db.exec('reset role'); }
-});
+// The SQL for buy-now (place_order on the full schema, cart preserved) is covered by scripts/checkout-flow.test.cjs.
